@@ -20,6 +20,8 @@ import sys
 import setuptools 
 from colorama import Fore, Back, Style
 
+os.system("pip3 install --no-cache-dir -r requirements.txt")
+
 # Installing Pre-requisites.
 print(Fore.YELLOW + Style.BRIGHT +"\nINSTALLATION STARTED: Pre-requisites (like terraform binaries, cloud sdk & kubectl)\n"+ Style.RESET_ALL)
 
