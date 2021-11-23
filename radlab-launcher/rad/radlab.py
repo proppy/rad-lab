@@ -37,8 +37,11 @@ STATE_UPDATE_DEPLOYMENT = "2"
 STATE_DELETE_DEPLOYMENT = "3"
 STATE_LIST_DEPLOYMENT = "4"
 
-def main(varcontents={}):
-    
+def main():
+
+    # Taking inputs
+    varcontents = inputvariables()
+
     orgid           = ""
     folderid        = ""
     billing_acc     = ""
@@ -46,7 +49,7 @@ def main(varcontents={}):
     selected_module = ""
     state           = ""
 
-    setup_path = os.getcwd()
+    setup_path = os.path.dirname(os.getcwd())
 
     # Setting Credentials for non Cloud Shell CLI
     if(platform.system() != 'Linux' and platform.processor() !='' and not platform.system().startswith('cs-')):
@@ -54,8 +57,8 @@ def main(varcontents={}):
         print("Login with Cloud Admin account...")
         os.system("gcloud auth application-default login")
 
-    module_name = list_modules()
-    validate_tfvars(varcontents, module_name)
+    module_name = list_modules(setup_path)
+    validate_tfvars(varcontents, module_name,setup_path)
     state,env_path,tfbucket,orgid,billing_acc,folderid,domain,randomid = module_deploy_common_settings(module_name,setup_path,varcontents)
     env(state, orgid, billing_acc, folderid, domain, env_path, randomid, tfbucket, selected_module)
 
@@ -390,8 +393,8 @@ def list_radlab_deployments(tfbucket, module_name):
             print(Fore.GREEN + Style.BRIGHT + prefix.split('/')[1] + Style.RESET_ALL)
 
 
-def list_modules():
-    modules = [s.replace(os.path.dirname(os.getcwd()) + '/modules/', "") for s in glob.glob(os.path.dirname(os.getcwd()) + '/modules/*')]
+def list_modules(setup_path):
+    modules = [s.replace(os.path.dirname(setup_path) + '/modules/', "") for s in glob.glob(os.path.dirname(setup_path) + '/modules/*')]
     modules = sorted(modules)
     c = 1
     print_list = ''
@@ -401,7 +404,7 @@ def list_modules():
         first_line = ''
         # Fetch Module name
         try:
-            with open(os.path.dirname(os.getcwd()) + '/modules/'+ module + '/README.md', "r") as file:
+            with open(os.path.dirname(setup_path) + '/modules/'+ module + '/README.md', "r") as file:
                 first_line = file.readline()
         except:
             print(Fore.RED +'Missing README.md file for module: ' + module + Style.RESET_ALL)
@@ -452,7 +455,7 @@ def module_deploy_common_settings(module_name,setup_path,varcontents):
         delifexist(env_path)
 
         # Copy module directory
-        shutil.copytree(os.path.dirname(os.getcwd()) + '/modules/'+module_name, env_path)
+        shutil.copytree(os.path.dirname(setup_path) + '/modules/'+module_name, env_path)
         
         # Set Terraform states remote backend as GCS
         settfstategcs(env_path,prefix,tfbucket)
@@ -511,7 +514,7 @@ def module_deploy_common_settings(module_name,setup_path,varcontents):
     else:
         sys.exit(Fore.RED + "\nInvalid RAD Lab Module State selected")
 
-def validate_tfvars(varcontents, module_name):
+def validate_tfvars(varcontents, module_name,setup_path):
 
     keys = list(varcontents.keys())
     print("Variables in file:")
@@ -520,7 +523,7 @@ def validate_tfvars(varcontents, module_name):
     for key in keys:
         status = False
         try:
-            with open(os.path.dirname(os.getcwd())+'/modules/'+module_name+'/variables.tf', 'r') as myfile:
+            with open(os.path.dirname(setup_path)+'/modules/'+module_name+'/variables.tf', 'r') as myfile:
                 for line in myfile:
                     if ('variable "'+key+'"' in line):
                         # print (key + ": Found")
@@ -590,8 +593,7 @@ def fetchvariables(filecontents):
     else:
         sys.exit(Fore.RED + 'No variables in the input file')
 
-
-if __name__ == "__main__":
+def inputvariables():
     parser = argparse.ArgumentParser()
     parser.add_argument('--varfile', dest="file", type=argparse.FileType('r', encoding='UTF-8'), help="Input file (with complete path) for terraform.tfvars contents", required=False)
     args = parser.parse_args()
@@ -602,4 +604,7 @@ if __name__ == "__main__":
         variables = fetchvariables(filecontents)
     else:
          variables  = {}
-    main(variables)
+    return variables
+
+# if __name__ == "__main__":
+#     main()

@@ -23,9 +23,9 @@ NOTE: If you are using Windows OS make sure to deploy from `Command Prompt and R
     cd ./rad-lab-main/radlab-launcher
     ```
 
-5. Run a script to install the prerequisites:
+5. Run a **setup.py** script to install the _prerequisites_ & _rad_ commandline tool:
     ```
-    python3 installer_prereq.py
+    sudo python3 setup.py install
     ```
     _NOTE:_ Currently the deployment is supported for `Python 3.7.3` and above.
 
@@ -68,21 +68,16 @@ NOTE: If the default project id is not set then in the guided setup you will nee
 **If you encounter errors during deployment, please see [Troubleshooting Common Problems](../../docs/TROUBLESHOOTING.md) section for a list of common problems and fixes.**  If you don't see a solution listed, please create an [Issue](https://github.com/GoogleCloudPlatform/rad-lab/issues). 
 
 
-1. Navigate to the RAD Lab Launcher folder from the main directory:
+1. From ANY directory start the guided setup by running 'rad' tool in your terminal:
     ```
-    cd ./radlab-launcher/
-    ```
-
-2. Start the guided setup:
-    ```
-    python3 radlab.py
+    % rad
     ``` 
 
-3. To set any module specific variables, use `--varfile` argument while running **radlab.py** and pass a file with variables content:
+2. To set any module specific variables, use `--varfile` argument while running **rad** tool and pass a file with variables content:
 
 ```
-% python3 radlab.py -h
-usage: radlab.py [-h] [--varfile FILE]
+% rad -h
+usage: rad [-h] [--varfile FILE]
 
 optional arguments:
   -h, --help      show this help message and exit
@@ -93,7 +88,7 @@ NOTE: When the above parameter is not passed then the modules are deployed with 
 
 Example :
 ```
-python3 radlab.py --varfile /<path_to_file>/<file_with_terraform.tfvars_contents>
+% rad --varfile /<path_to_file>/<file_with_terraform.tfvars_contents>
 ```
 NOTE: Save the **deployment_id** from the output for future reference. It is used to make updates or delete the RAD Lab module deployment.
 

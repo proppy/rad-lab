@@ -2,7 +2,7 @@
 
 RAD Lab enables users to deploy infrastructure on Google Cloud Platform (GCP) to support specific use cases. Infrastructure is created and managed through [Terraform](https://www.terraform.io/) in conjunction with support scripts written in Python. The templates, code, and documentation for each use case are bundled into [modules](./modules).
 
-Each module comes with an initial sample configuration that can be deployed via the [RAD Lab Launcher](./radlab-launcher). Teams with experience in Terraform can use the Terraform modules in the [/modules-directory](./modules) directly, to integrate the codebase with their existing CI/CD infrastructure.
+Each module comes with an initial sample configuration that can be deployed via the [RAD Lab Launcher](./radlab-launcher). Teams with experience in Terraform can use the Terraform modules in the [/modules](./modules) directory directly, to integrate the codebase with their existing CI/CD infrastructure.
 
 For any issues, please create an issue in the Issue tracker of the repository, following the provided templates.
 
@@ -17,15 +17,18 @@ To create a module in an existing GCP environment, please click on the “Open I
 [![Open in Cloud Shell](https://gstatic.com/cloudssh/images/open-btn.svg)](https://ssh.cloud.google.com/cloudshell/editor?cloudshell_git_repo=https://github.com/GoogleCloudPlatform/rad-lab&cloudshell_git_branch=main)
 
     
-### Prerequisites
+### Setup
+Users can run `setup.py` included in the [/radlab-launcher](./radlab-launcher) directory to validate/install below prerequisites and setup command line tool "rad" (i.e. RAD Lab Launcher).
+
+_NOTE: Make sure [python](https://www.python.org/downloads/) version 3.7.3 or higher is already installed._
+
 * [terraform](https://learn.hashicorp.com/tutorials/terraform/install-cli?in=terraform/gcp-get-started) version 1.0 or higher.
 * [gcloud](https://cloud.google.com/sdk/docs/install) SDK version 360.0.0 or higher. (ONLY for [RAD Lab Launcher](./radlab-launcher))
-* [python](https://www.python.org/downloads/) version 3.7.3 or higher. (ONLY for [RAD Lab Launcher](./radlab-launcher))
+* [kubectl](https://kubernetes.io/docs/reference/kubectl/overview/) (ONLY for [RAD Lab Launcher](./radlab-launcher))
 
-Users can run `installer_prereq.py` included in the [radlab-launcher directory](./radlab-launcher) to validate these prerequisites and install any missing dependencies.
 
 ### RAD Lab Launcher
-An installation script is included to enable users without prior cloud or Terraform experience to explore the advantages of GCP.  The deployment wizard will create the necessary infrastructure for each module.  More instructions on the launcher can be found [here](./radlab-launcher).
+A command line tool, included to enable users without prior cloud or Terraform experience to explore the advantages of GCP.  The deployment wizard will create the necessary infrastructure for each module.  More instructions on the launcher can be found [here](./radlab-launcher).
 
 ### Modules
 

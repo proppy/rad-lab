@@ -10,7 +10,7 @@
 ## Deployment Troubleshooting
 
 ### Google Organization Policies - unable to modify constraints
-**Issue**: When running the ```python3 radlab.py ``` installation from cloud shell,  you receive the following error
+**Issue**: When running the ```rad``` tool installation from cloud shell,  you receive the following error
 ```
 Error: Error waiting to create Instance: Error waiting for Creating Instance: Error code 25, message: Constraint constraints/compute.vmExternalIpAccess violated for project <project_id>. Add instance projects/<project_id>/zones/us-east4-c/instances/notebooks-instance-0 to the constraint to use external IP with it.
 .
@@ -20,12 +20,12 @@ Error Occurred - Deployment failed for ID: <deployment_id>
 
 ```
 
-**Solution**: If you see above error in your initial deployment run, rerun the deployment via ``` python3 radlab.py``` using the <deployment_id> and select `Update` (in [Steps to Deploy RAD Lab Modules](../radlab-launcher/README.md#deploy-a-rad-lab-module). This may have been caused as the Org Policy ```constraints/compute.vmExternalIpAccess``` is not completely rolled out.
+**Solution**: If you see above error in your initial deployment run, rerun the deployment via ```rad``` tool using the <deployment_id> and select `Update` (in [Steps to Deploy RAD Lab Modules](../radlab-launcher/README.md#deploy-a-rad-lab-module). This may have been caused as the Org Policy ```constraints/compute.vmExternalIpAccess``` is not completely rolled out.
 
 NOTE: Similarly if the error occurs for any other org policies then the workaround is same as above.  
 
 **Issue**:
-When running the ```python3 radlab.py ``` installation from cloud shell, you receive the follwoing error(s):
+When running the ```rad``` tool, installation from cloud shell, you receive the follwoing error(s):
 
 ```
 Error: googleapi: Error 403: The caller does not have permission, forbidden
@@ -45,14 +45,14 @@ OR
 with google_project_organization_policy.external_ip_policy[0],
 ```
 
-**Solution**: The project is required to be run as part of a Google Organization in GCP. Be sure that the GCP user you run the ```python3 radlab.py``` script as has both of the following roles:
+**Solution**: The project is required to be run as part of a Google Organization in GCP. Be sure that the GCP user you run the ```rad``` tool as has both of the following roles:
 ```
 Organization Policy Administrator
 Organization Viewer
 ```
 
 ### Project Quota Exceeded
-**Issue**: When running the ```python3 radlab.py ``` installation from cloud shell, you receive the following error: 
+**Issue**: When running the ```rad``` tool, installation from cloud shell, you receive the following error: 
 
 ```
  Error: Error setting billing account "<yourBillingID>" for project "projects/radlab-ds-analytics-<deployment_id>": 
@@ -69,7 +69,7 @@ Please be sure you are logged in as a user with GCP project owner rights.
 > **Note:** If your billing account is relatively new, or if you are still in your free trial period,  you may be required to authorize funds to pre-pay your billing account. The amount you asked to pay will vary depending on your billing history but will usually not exceed $50. Please see [Why am I being asked to make a payment for more projects](https://support.google.com/cloud/answer/6330231?hl=en#) for details.
 
 ### Timeout when Destroying the deployment
-**Issue**: When running the ```python3 radlab.py ``` installation from cloud shell,  you receive the following error
+**Issue**: When running the ```rad``` tool, installation from cloud shell,  you receive the following error
 
 ```
 ╷
@@ -79,12 +79,12 @@ Please be sure you are logged in as a user with GCP project owner rights.
 .
 Error Occurred - Deployment failed for ID: <deployment_id>
 ```
-**Solution**: If you see above error, rerun the deployment via ```python3 radlab.py``` using the <deployment_id> and select `Delete` (in [Steps to Deploy RAD Lab Modules](../radlab-launcher/README.md#deploy-a-rad-lab-module). This may have been caused if it took longer than expected to destroy any resource.
+**Solution**: If you see above error, rerun the deployment via ```rad``` tool, using the <deployment_id> and select `Delete` (in [Steps to Deploy RAD Lab Modules](../radlab-launcher/README.md#deploy-a-rad-lab-module). This may have been caused if it took longer than expected to destroy any resource.
 
 ## Operations Troubleshooting
 
 ### Local Terraform Deployment ID Directory Already Exists
-**Issue**:  When running an ‘Update’ or ‘Delete’ action when running ```python3 radlab.py ``` installation from cloud shell, you receive the following error:
+**Issue**:  When running an ‘Update’ or ‘Delete’ action when running ```rad``` tool, installation from cloud shell, you receive the following error:
 
 ```
 File "radlab.py", line 134, in main
@@ -103,4 +103,4 @@ To solve this issue, you can safely remove the conflicting deployment folder by 
 And removing the module folder with the conflicting deploymentID:
 
 ```rm -rfv /data_science_<deployment_id>/```
-> **Note:** The above command will remove all files and sub-directories in the ```/data_science_<deployment_id>/``` directory before removing the ```/data_science_<deployment_id>/``` directory. The contents of this directory will sync from the GCP state bucket next time you run the ```python3 radlab.py ``` installation.
+> **Note:** The above command will remove all files and sub-directories in the ```/data_science_<deployment_id>/``` directory before removing the ```/data_science_<deployment_id>/``` directory. The contents of this directory will sync from the GCP state bucket next time you run the ```rad``` tool installation.
