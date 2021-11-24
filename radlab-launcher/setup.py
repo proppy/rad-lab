@@ -18,25 +18,24 @@
 import os
 import sys
 import setuptools 
-from colorama import Fore, Back, Style
 
 os.system("pip3 install --no-cache-dir -r requirements.txt")
 
 # Installing Pre-requisites.
-print(Fore.YELLOW + Style.BRIGHT +"\nINSTALLATION STARTED: Pre-requisites (like terraform binaries, cloud sdk & kubectl)\n"+ Style.RESET_ALL)
+print("\n>>>> INSTALLATION STARTED: Pre-requisites (like terraform binaries, cloud sdk & kubectl)\n")
 
 try:
     os.system("pip3 install --no-cache-dir -r "+os.getcwd()+"/rad/requirements.txt")
     os.system("python3 "+os.getcwd()+"/rad/terraform_installer.py")
     os.system("python3 "+os.getcwd()+"/rad/cloudsdk_kubectl_installer.py")
 
-    print(Fore.GREEN + Style.BRIGHT +"\nINSTALLTION COMPLETED: Pre-requisites\n"+ Style.RESET_ALL)
+    print("\n>>>> INSTALLTION COMPLETED: Pre-requisites\n")
 
 except:
-    sys.exit(Fore.RED + Style.BRIGHT +"\nINSTALLTION FAILED: Pre-requisites\n"+ Style.RESET_ALL)
+    sys.exit("\n>>>> INSTALLTION FAILED: Pre-requisites\n")
 
 # Installing 'rad' command line tool
-print(Fore.YELLOW + Style.BRIGHT +"\nINSTALLATION STARTED: 'rad' Command Line Tool\n"+ Style.RESET_ALL)
+print("\n>>>> INSTALLATION STARTED: 'rad' Command Line Tool\n")
 
 try:
     setuptools.setup( 
@@ -56,6 +55,6 @@ try:
         ], 
     )
 
-    print(Fore.GREEN + Style.BRIGHT +"\nINSTALLATION COMPLETED: 'rad' Command Line Tool\n"+ Style.RESET_ALL)
+    print("\n>>>> INSTALLATION COMPLETED: 'rad' Command Line Tool\n")
 except:
-    sys.exit(Fore.RED + Style.BRIGHT +"\nINSTALLTION FAILED: 'rad' Command Line Tool\n"+ Style.RESET_ALL)
+    sys.exit("\n>>>> INSTALLTION FAILED: 'rad' Command Line Tool\n")

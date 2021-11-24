@@ -67,13 +67,18 @@ NOTE: If the default project id is not set then in the guided setup you will nee
 ## Deploy a RAD Lab Module
 **If you encounter errors during deployment, please see [Troubleshooting Common Problems](../../docs/TROUBLESHOOTING.md) section for a list of common problems and fixes.**  If you don't see a solution listed, please create an [Issue](https://github.com/GoogleCloudPlatform/rad-lab/issues). 
 
+1. Navigate to the RAD Lab Launcher [./radlab-launcher/rad](./rad) folder from the main directory:
 
-1. From ANY directory start the guided setup by running 'rad' tool in your terminal:
+    ```
+    cd ./radlab-launcher/rad
+    ```
+
+2. Start the guided setup by running 'rad' tool in your terminal:
     ```
     % rad
     ``` 
 
-2. To set any module specific variables, use `--varfile` argument while running **rad** tool and pass a file with variables content:
+3. To set any module specific variables, use `--varfile` argument while running **rad** tool and pass a file with variables content:
 
 ```
 % rad -h
