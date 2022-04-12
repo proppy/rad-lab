@@ -47,6 +47,7 @@ locals {
     "roles/compute.instanceAdmin",
     "roles/iam.serviceAccountUser",
     "roles/storage.objectViewer",
+    "roles/aiplatform.admin",
   ]
 
   cloudbuild_sa_project_roles = [
@@ -67,11 +68,14 @@ locals {
     "notebooks.googleapis.com",
     "cloudbuild.googleapis.com",
     "artifactregistry.googleapis.com",
-  ]
+    "aiplatform.googleapis.com",
+  ] : []
 
   project_services = var.enable_services ? (var.billing_budget_pubsub_topic ? distinct(concat(local.default_apis,["pubsub.googleapis.com"])) : local.default_apis) : []
 
   gcloud_impersonate_flag = length(var.resource_creator_identity) != 0 ? "--impersonate-service-account=${var.resource_creator_identity}" : ""
+
+  image_tag = var.image_tag != "" ? var.image_tag : formatdate("YYYYMMDDhhmm", timestamp())
 }
 
 resource "random_id" "default" {
@@ -237,6 +241,59 @@ resource "google_project_iam_member" "sa_image_builder_permissions" {
   role     = each.value
 }
 
+resource "google_service_account_iam_member" "sa_ai_notebook_user_iam" {
+  for_each           = var.trusted_users
+  member             = "user:${each.value}"
+  role               = "roles/iam.serviceAccountUser"
+  service_account_id = google_service_account.sa_p_notebook.id
+}
+
+resource "google_project_iam_member" "ai_notebook_user_role1" {
+  for_each = var.trusted_users
+  project  = local.project.project_id
+  member   = "user:${each.value}"
+  role     = "roles/notebooks.admin"
+}
+
+resource "google_project_iam_member" "ai_notebook_user_role2" {
+  for_each = var.trusted_users
+  project  = local.project.project_id  
+  member   = "user:${each.value}"
+  role     = "roles/viewer"
+}
+
+resource "google_notebooks_runtime" "ai_notebook_managed" {
+  count        = var.notebook_count
+  project      = local.project.project_id
+  name         = local.notebook_names[count.index]
+  location     = local.region
+
+  access_config {
+    access_type = "SINGLE_USER"
+    runtime_owner = "proppy@google.com"
+  }
+  virtual_machine {
+    virtual_machine_config {
+      machine_type = var.machine_type
+      data_disk {
+        initialize_params {
+          disk_size_gb = "100"
+          disk_type = "PD_STANDARD"
+        }
+      }
+      container_images {
+        repository = "${google_artifact_registry_repository.containers_repo.location}-docker.pkg.dev/${local.project.project_id}/${google_artifact_registry_repository.containers_repo.repository_id}/${var.image_name}"
+        tag = local.image_tag
+      }
+    }
+  }
+
+  depends_on = [
+    time_sleep.wait_120_seconds,
+    null_resource.build_and_push_image,
+  ]
+}
+
 resource "google_notebooks_instance" "ai_notebook" {
   count        = var.notebook_count
   project      = local.project.project_id
@@ -246,9 +303,9 @@ resource "google_notebooks_instance" "ai_notebook" {
 
   container_image {
     repository = "${google_artifact_registry_repository.containers_repo.location}-docker.pkg.dev/${local.project.project_id}/${google_artifact_registry_repository.containers_repo.repository_id}/${var.image_name}"
-    tag        = "latest"
+    tag        = local.image_tag
   }
-
+  
   service_account = google_service_account.sa_p_notebook.email
 
   install_gpu_driver = false
@@ -318,11 +375,12 @@ resource "null_resource" "build_and_push_image" {
     env_sha             = filesha1("${path.module}/scripts/build/images/provision/install.tcl")
     profile_sha         = filesha1("${path.module}/scripts/build/images/provision/profile.sh")
     notebook_sha        = filesha1("${path.module}/scripts/build/notebooks/inverter.md")
+    image_tag = local.image_tag
   }
 
   provisioner "local-exec" {
     working_dir = path.module
-    command     = "gcloud ${local.gcloud_impersonate_flag} --project=${local.project.project_id} builds submit . --config ${path.module}/scripts/build/cloudbuild.yaml --substitutions \"_ZONE=${var.zone},_COMPUTE_IMAGE=${var.image_name},_CONTAINER_IMAGE=${google_artifact_registry_repository.containers_repo.location}-docker.pkg.dev/${local.project.project_id}/${google_artifact_registry_repository.containers_repo.repository_id}/${var.image_name},_NOTEBOOKS_BUCKET=${google_storage_bucket.notebooks_bucket.name},_COMPUTE_NETWORK=${local.network.id},_COMPUTE_SUBNET=${local.subnet.id},_CLOUD_BUILD_SA=${google_service_account.sa_image_builder_identity.email}\""
+    command     = "gcloud ${local.gcloud_impersonate_flag} --project=${local.project.project_id} builds submit . --config ${path.module}/scripts/build/cloudbuild.yaml --substitutions \"_ZONE=${var.zone},_COMPUTE_IMAGE=${var.image_name},_CONTAINER_IMAGE=${google_artifact_registry_repository.containers_repo.location}-docker.pkg.dev/${local.project.project_id}/${google_artifact_registry_repository.containers_repo.repository_id}/${var.image_name},_NOTEBOOKS_BUCKET=${google_storage_bucket.notebooks_bucket.name},_COMPUTE_NETWORK=${local.network.id},_COMPUTE_SUBNET=${local.subnet.id}},_IMAGE_TAG=${local.image_tag},_CLOUD_BUILD_SA=${google_service_account.sa_image_builder_identity.email}\""
   }
 
   depends_on = [

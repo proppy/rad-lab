@@ -13,50 +13,45 @@ jupyter:
 ---
 
 <!-- #region tags=[] -->
-# Inverter Sample
+# Serv Sample
 
 ```
 Copyright 2022 Google LLC.
 SPDX-License-Identifier: Apache-2.0
 ```
 
-This notebook shows how to run a simple inverter design thru an end-to-end RTL to GDSII flow targetting the [SKY130](https://github.com/google/skywater-pdk/) process node.
+This notebook shows how to run the [SERV](https://github.com/olofk/serv) RISC-V core design thru an end-to-end RTL to GDSII flow targetting the [SKY130](https://github.com/google/skywater-pdk/) process node.
 <!-- #endregion -->
 
 ## Define flow parameters
 
 ```python tags=["parameters"]
-die_width = 45
-target_density = 90
-run_path = 'runs'
+die_width = 300
+target_density = 80
+run_path = 'runs/serv'
 ```
 
-## Write verilog
+## Get SERV RTL
 
-Invert the `in` input signal and continuously assign it to the `out` output signal.
-
-```bash magic_args="-c 'cat > inverter.v; iverilog inverter.v'"
-module inverter(input wire in, output wire out);
-    assign out = !in;
-endmodule
+```python
+!git clone https://github.com/olofk/serv
 ```
 ## Write flow configuration
 
 See [OpenLane Variables information](https://github.com/The-OpenROAD-Project/OpenLane/blob/master/configuration/README.md) for the list of available variables.
 
 ```python
-%%bash -c 'cat > config.tcl; tclsh config.tcl'
-set ::env(DESIGN_NAME) inverter
+%%writefile config.tcl
+set ::env(DESIGN_NAME) serv_top
 
-set ::env(VERILOG_FILES) "inverter.v"
+set script_dir [file dirname [file normalize [info script]]]
+set ::env(VERILOG_FILES) "$script_dir/serv/rtl/*.v"
+ 
+set ::env(CLOCK_PORT) "click"
 
 set ::env(FP_SIZING) "absolute"
 set ::env(DIE_AREA) "0 0 $::env(DIE_WIDTH) $::env(DIE_WIDTH)"
 set ::env(PL_TARGET_DENSITY) [expr {$::env(TARGET_DENSITY) / 100.0}]
-
-set ::env(CLOCK_TREE_SYNTH) 0
-set ::env(CLOCK_PORT) ""
-set ::env(DIODE_INSERTION_STRATEGY) 0
 ```
 
 ## Run OpenLane flow
@@ -67,26 +62,31 @@ set ::env(DIODE_INSERTION_STRATEGY) 0
 #papermill_description=RunningOpenLaneFlow
 %env DIE_WIDTH={die_width}
 %env TARGET_DENSITY={target_density}
-!flow.tcl -design . -run_path {run_path} -ignore_mismatches
+!flow.tcl -design . -run_path {run_path}
 ```
 
 ## Display layout
 
-Use [GDSII Tool Kit](https://github.com/heitzmann/gdstk) to convert the resulting GDSII file to SVG.
+Use [GDSII Tool Kit](https://github.com/heitzmann/gdstk) and [CairoSVG](https://cairosvg.org/) to convert the resulting GDSII file to PNG.
 
 ```python
 #papermill_description=RenderingGDS
 import pathlib
 import gdstk
+import cairosvg
+
 import IPython.display
 import scrapbook as sb
 
 gds_path = sorted(pathlib.Path(run_path).glob('*/results/final/gds/*.gds'))[-1]
 library = gdstk.read_gds(gds_path)
 top_cells = library.top_level()
-svg_path = pathlib.Path(run_path) / 'inverter.svg'
+svg_path = pathlib.Path(run_path) / 'serv.svg'
 top_cells[0].write_svg(svg_path)
-sb.glue('layout', IPython.display.SVG(svg_path), 'display', display=True)
+png_path = pathlib.Path(run_path) / 'serv.png'
+
+cairosvg.svg2png(url=str(svg_path), write_to=str(png_path))
+sb.glue('layout', IPython.display.Image(png_path), 'display', display=True)
 ```
 
 ## Dump flow report

@@ -24,6 +24,8 @@ dependencies:
   - netgen=1.5.229_0_g153ce0e
   - yosys
   - gdstk
+  - cairosvg
+  - svgutils
   - tcllib
   - iverilog
   - xls
@@ -40,4 +42,4 @@ dependencies:
     - klayout
     - scrapbook[gcs]
     - google-cloud-aiplatform
-    - cloudml-hypertune    
+    - cloudml-hypertune

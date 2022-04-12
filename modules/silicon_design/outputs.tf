@@ -50,3 +50,12 @@ output "artifact_registry_repository_id" {
   value       = google_artifact_registry_repository.containers_repo.repository_id
 }
 
+output "notebooks_container_image" {
+  description = "Container Image URI"
+  value       = "${google_artifact_registry_repository.containers_repo.location}-docker.pkg.dev/${local.project.project_id}/${google_artifact_registry_repository.containers_repo.repository_id}/${var.image_name}:${local.image_tag}"
+}
+
+output "notebooks_vm" {
+  description = "GCE VM Image Name"
+  value       = "${var.image_name}-${local.image_tag}"
+}
