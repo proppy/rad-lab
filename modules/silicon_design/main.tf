@@ -44,6 +44,7 @@ locals {
     "roles/compute.instanceAdmin",
     "roles/iam.serviceAccountUser",
     "roles/storage.objectViewer",
+    "roles/aiplatform.admin",
   ]
 
   cloudbuild_sa_project_roles = [
@@ -58,9 +59,12 @@ locals {
     "notebooks.googleapis.com",
     "cloudbuild.googleapis.com",
     "artifactregistry.googleapis.com",
+    "aiplatform.googleapis.com",
   ] : []
 
   notebook_names = length(var.notebook_names) > 0 ? var.notebook_names : [for i in range(var.notebook_count): "silicon-design-notebook-${i}"]
+
+  image_tag = var.image_tag != "" ? var.image_tag : formatdate("YYYYMMDDhhmm", timestamp())
 }
 
 resource "random_id" "default" {
@@ -183,7 +187,7 @@ resource "google_project_iam_member" "sa_p_cloudbuild_permissions" {
 
 resource "google_service_account_iam_member" "sa_ai_notebook_user_iam" {
   for_each           = var.trusted_users
-  member             = each.value
+  member             = "user:${each.value}"
   role               = "roles/iam.serviceAccountUser"
   service_account_id = google_service_account.sa_p_notebook.id
 }
@@ -191,15 +195,47 @@ resource "google_service_account_iam_member" "sa_ai_notebook_user_iam" {
 resource "google_project_iam_member" "ai_notebook_user_role1" {
   for_each = var.trusted_users
   project  = local.project.project_id
-  member   = each.value
+  member   = "user:${each.value}"
   role     = "roles/notebooks.admin"
 }
 
 resource "google_project_iam_member" "ai_notebook_user_role2" {
   for_each = var.trusted_users
   project  = local.project.project_id  
-  member   = each.value
+  member   = "user:${each.value}"
   role     = "roles/viewer"
+}
+
+resource "google_notebooks_runtime" "ai_notebook_managed" {
+  count        = var.notebook_count
+  project      = local.project.project_id
+  name         = local.notebook_names[count.index]
+  location     = local.region
+
+  access_config {
+    access_type = "SINGLE_USER"
+    runtime_owner = "proppy@google.com"
+  }
+  virtual_machine {
+    virtual_machine_config {
+      machine_type = var.machine_type
+      data_disk {
+        initialize_params {
+          disk_size_gb = "100"
+          disk_type = "PD_STANDARD"
+        }
+      }
+      container_images {
+        repository = "${google_artifact_registry_repository.containers_repo.location}-docker.pkg.dev/${local.project.project_id}/${google_artifact_registry_repository.containers_repo.repository_id}/${var.image_name}"
+        tag = local.image_tag
+      }
+    }
+  }
+
+  depends_on = [
+    time_sleep.wait_120_seconds,
+    null_resource.build_and_push_image,
+  ]
 }
 
 resource "google_notebooks_instance" "ai_notebook" {
@@ -211,9 +247,9 @@ resource "google_notebooks_instance" "ai_notebook" {
 
   container_image {
     repository = "${google_artifact_registry_repository.containers_repo.location}-docker.pkg.dev/${local.project.project_id}/${google_artifact_registry_repository.containers_repo.repository_id}/${var.image_name}"
-    tag        = "latest"
+    tag        = local.image_tag
   }
-
+  
   service_account = google_service_account.sa_p_notebook.email
 
   install_gpu_driver = false
@@ -268,19 +304,12 @@ resource "google_storage_bucket" "notebooks_bucket" {
 # Locally build container for notebook container and push to container registry #
 resource "null_resource" "build_and_push_image" {
   triggers = {
-    cloudbuild_yaml_sha = filesha1("${path.module}/scripts/build/cloudbuild.yaml")
-    build_script_sha    = filesha1("${path.module}/scripts/build/build.sh")
-    workflow_sha      = filesha1("${path.module}/scripts/build/images/compute_image.wf.json")    
-    dockerfile_sha      = filesha1("${path.module}/scripts/build/images/Dockerfile")
-    environment_sha        = filesha1("${path.module}/scripts/build/images/provision/environment.yml")    
-    env_sha        = filesha1("${path.module}/scripts/build/images/provision/env.tcl")    
-    profile_sha        = filesha1("${path.module}/scripts/build/images/provision/profile.sh")    
-    notebook_sha        = filesha1("${path.module}/scripts/build/notebooks/inverter.md")
+    image_tag = local.image_tag
   }
 
   provisioner "local-exec" {
     working_dir = path.module
-    command     = "scripts/build/build.sh ${local.project.project_id} ${var.zone} ${var.image_name} ${google_artifact_registry_repository.containers_repo.location}-docker.pkg.dev/${local.project.project_id}/${google_artifact_registry_repository.containers_repo.repository_id}/${var.image_name} ${google_storage_bucket.notebooks_bucket.name} ${local.network.id} ${local.subnet.id}"
+    command     = "scripts/build/build.sh ${local.project.project_id} ${var.zone} ${var.image_name} ${google_artifact_registry_repository.containers_repo.location}-docker.pkg.dev/${local.project.project_id}/${google_artifact_registry_repository.containers_repo.repository_id}/${var.image_name} ${local.image_tag} ${google_storage_bucket.notebooks_bucket.name} ${local.network.id} ${local.subnet.id}"
   }
 
   depends_on = [

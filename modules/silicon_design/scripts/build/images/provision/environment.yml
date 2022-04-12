@@ -16,16 +16,15 @@ channels:
   - litex-hub
   - conda-forge
 dependencies:
-  # https://github.com/The-OpenROAD-Project/OpenLane/pull/978
   - open_pdks.sky130a
   - magic
   - openroad
   - netgen
   - yosys>=0.15
   - gdstk
+  - cairosvg
+  - svgutils
   - ngspice-lib
-  - python
-  - pip
   - tcllib
   - iverilog
   - xls
@@ -36,3 +35,6 @@ dependencies:
     - pyspice
     - gdsfactory
     - klayout
+    - scrapbook[gcs]
+    - google-cloud-aiplatform
+    - cloudml-hypertune

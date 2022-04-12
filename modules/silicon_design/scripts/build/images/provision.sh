@@ -21,14 +21,10 @@ env
 OPENLANE_VERSION=master
 PROVISION_DIR=/tmp/provision
 
-SYSTEM_NAME=$(dmidecode -s system-product-name || true)
-
-if [ -n "$(echo ${SYSTEM_NAME} | grep 'Google Compute Engine')" ]; then
 echo "DaisyStatus: fetching provisioning script"
 DAISY_SOURCES_PATH=$(curl -H 'Metadata-Flavor: Google' http://metadata.google.internal/computeMetadata/v1/instance/attributes/daisy-sources-path)
 mkdir -p ${PROVISION_DIR}
 gsutil -m rsync ${DAISY_SOURCES_PATH}/provision/ ${PROVISION_DIR}/ || true
-fi
 
 echo "DaisyStatus: installing conda-eda environment"
 /opt/conda/bin/conda install --yes --prefix /opt/conda/ mamba
@@ -50,4 +46,9 @@ curl --silent  https://patch-diff.githubusercontent.com/raw/The-OpenROAD-Project
 echo "DaisyStatus: adding profile hook"
 cp ${PROVISION_DIR}/profile.sh /etc/profile.d/silicon-design-profile.sh
 
+echo "DaisyStatus: adding papermill launcher"
+cp ${PROVISION_DIR}/papermill-launcher /usr/local/bin/
+chmod +x /usr/local/bin/papermill-launcher
+
 echo "DaisySuccess: done"
+

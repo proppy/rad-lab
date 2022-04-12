@@ -140,14 +140,19 @@ variable "zone" {
 }
 
 variable "image_name" {
-  description = "Basename for for the compute and container image."
+  description = "Basename for the compute and container image."
   type        = string
   default     = "silicon-design-ubuntu-2004"
+}
+
+variable "image_tag" {
+  description = "Tag for the compute and container image."
+  type        = string
+  default     = ""
 }
 
 variable "notebooks_bucket_name" {
   description = "Notebooks GCS Bucket Name"
   type        = string
   default     = "silicon-design-notebooks"
-
 }
