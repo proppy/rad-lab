@@ -18,6 +18,7 @@ substitutions:
   _ZONE: 'asia-northeast1-a'
   _COMPUTE_IMAGE: 'silicon-design-ubuntu-2004'
   _CONTAINER_IMAGE: 'silicon-design-ubuntu-2004'
+  _IMAGE_TAG: 'default-tag'
   _NOTEBOOKS_BUCKET: 'silicon-design-notebooks'
   _COMPUTE_NETWORK: 'global/networks/default'
   _COMPUTE_SUBNET: ''
@@ -45,22 +46,27 @@ steps:
     cd scripts/build/images/
     gsutil cp gs://compute-image-tools/release/linux/daisy .
     chmod +x daisy
-    ./daisy -project $PROJECT_ID -zone $_ZONE -variables image_name=$_COMPUTE_IMAGE,image_tag=$BUILD_ID,network=$_COMPUTE_NETWORK,subnet=$_COMPUTE_SUBNET,service_account=$_CLOUD_BUILD_SA compute_image.wf.json
+    echo gcloud compute images describe $_COMPUTE_IMAGE-$_IMAGE_TAG || ./daisy -project $PROJECT_ID -zone $_ZONE -variables image_name=$_COMPUTE_IMAGE,image_tag=$_IMAGE_TAG,network=$_COMPUTE_NETWORK,subnet=$_COMPUTE_SUBNET,service_account=$_CLOUD_BUILD_SA compute_image.wf.json
   waitFor: ['-']    
+- id: 'container-image-pull'
+  name: 'gcr.io/cloud-builders/docker'
+  entrypoint: 'bash'
+  args: ['-c', 'docker pull $_CONTAINER_IMAGE:latest || exit 0']
+  waitFor: ['-']
 - id: 'container-image-build'
   name: 'gcr.io/cloud-builders/docker'
-  args: ['build', '-t', '$_CONTAINER_IMAGE:$BUILD_ID', './scripts/build/images']
-  waitFor: ['-']  
+  args: ['build', '-t', '$_CONTAINER_IMAGE:$_IMAGE_TAG', '--cache-from', '$_CONTAINER_IMAGE:latest', './scripts/build/images']
+  waitFor: ['container-image-pull']  
 - id: 'container-image-tag'
   name: 'gcr.io/cloud-builders/docker'
-  args: ['tag', '$_CONTAINER_IMAGE:$BUILD_ID', '$_CONTAINER_IMAGE:latest']
+  args: ['tag', '$_CONTAINER_IMAGE:$_IMAGE_TAG', '$_CONTAINER_IMAGE:latest']
   waitFor: ['container-image-build']
 - id: 'container-image-test'
   name: 'gcr.io/cloud-builders/docker'
   args: ['run', '$_CONTAINER_IMAGE:$BUILD_ID', 'flow.tcl', '-design', 'inverter']  
   waitFor: ['container-image-tag']  
 images:
-- '$_CONTAINER_IMAGE:$BUILD_ID'
+- '$_CONTAINER_IMAGE:$_IMAGE_TAG'
 - '$_CONTAINER_IMAGE:latest'
 artifacts:
   objects:

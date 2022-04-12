@@ -1,0 +1,28 @@
+#!/usr/bin/env python
+import os.path
+import sys
+
+import papermill as pm
+
+def args(param_args):
+    while len(param_args):
+        arg = param_args.pop(0).replace('--', '')
+        if '=' in arg:
+            yield arg.split('=')
+        else:
+            val = params_args.pop(0)
+            yield arg, val
+
+def expand_path(p):
+    return os.path.normpath(
+        os.path.expandvars(p)
+    ).replace('gs:/', 'gs://')
+
+_, input_path, output_path, *params_args = sys.argv
+input_path = expand_path(input_path)
+output_path = expand_path(output_path)
+parameters = dict(
+    (k, expand_path(v))
+    for k, v in args(params_args)
+)
+pm.execute_notebook(input_path, output_path, parameters=parameters, progress_bar=False)

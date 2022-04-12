@@ -13,58 +13,95 @@ jupyter:
 ---
 
 <!-- #region tags=[] -->
-# Inverter Sample
+# XLS Sample
 
 ```
 Copyright 2022 Google LLC.
 SPDX-License-Identifier: Apache-2.0
 ```
 
-This notebook shows how to run a simple inverter design thru an end-to-end RTL to GDSII flow targetting the [SKY130](https://github.com/google/skywater-pdk/) process node.
+This notebook shows how to run a [XLS](https://google.github.io/xls/)-based CRC checksum calculator design thru an end-to-end RTL to GDSII flow targetting the [SKY130](https://github.com/google/skywater-pdk/) process node.
 <!-- #endregion -->
 
+<!-- #region tags=[] -->
 ## Define flow parameters
+<!-- #endregion -->
 
 ```python tags=["parameters"]
-die_width = 45
-target_density = 90
-run_path = 'runs'
+die_width = 100
+target_density = 80
+run_path = 'runs/crc32'
 ```
 
-## Write verilog
+<!-- #region id="ylo5KQ-gvX02" -->
+## Write and test DSLX module
 
-Invert the `in` input signal and continuously assign it to the `out` output signal.
+The CRC computation is written using the [DSLX](https://google.github.io/xls/dslx_reference/) HLS, a domain specific, dataflow-oriented functional language used to build hardware w/ a Rust-like syntax.
+<!-- #endregion -->
 
-```bash magic_args="-c 'cat > inverter.v; iverilog inverter.v'"
-module inverter(input wire in, output wire out);
-    assign out = !in;
-endmodule
+```bash colab={"base_uri": "https://localhost:8080/"} id="JKGxScUtoV4E" outputId="b9359a05-fa7f-4366-ecf8-40138acb11f1" magic_args="-c 'cat > crc32.x; interpreter_main crc32.x'"
+// Performs a table-less crc32 of the input data as in Hacker's Delight:
+// https://github.com/hcs0/Hackers-Delight/blob/master/crc.c.txt (roughly flavor b)
+
+fn crc32_one_byte(byte: u8, polynomial: u32, crc: u32) -> u32 {
+  let crc = crc ^ (byte as u32);
+  // 8 rounds of updates.
+  for (i, crc): (u32, u32) in range(u32:0, u32:8) {
+    let mask = -(crc & u32:1);
+    (crc >> u32:1) ^ (polynomial & mask)
+  }(crc)
+}
+
+fn main(message: u8) -> u32 {
+  crc32_one_byte(message, u32:0xEDB88320, u32:-1) ^ u32:-1
+}
+
+#![test]
+fn crc32_one_char() {
+  assert_eq(u32:0x83DCEFB7, main('1'))
+}
 ```
+
+<!-- #region id="smMIJhopvqwo" -->
+## Generate IR and Verilog
+
+XLS can generate combinational or pipelined version of a given design.
+<!-- #endregion -->
+
+```python colab={"base_uri": "https://localhost:8080/"} id="YMTh7WB6oxeW" outputId="a4e9d2f2-69e3-47e9-cad6-e1b89124553b"
+!ir_converter_main --top main crc32.x > crc32.ir
+!opt_main crc32.ir > crc32_opt.ir
+!codegen_main --generator=combinational crc32_opt.ir > crc32.v
+!cat crc32.v
+```
+
 ## Write flow configuration
 
 See [OpenLane Variables information](https://github.com/The-OpenROAD-Project/OpenLane/blob/master/configuration/README.md) for the list of available variables.
 
-```python
-<<<<<<< HEAD
-%%bash -c 'cat > config.tcl; tclsh config.tcl'
-set ::env(DESIGN_NAME) inverter
+```python id="rBk7BdF0n_o5"
+%%writefile config.tcl
+set ::env(DESIGN_NAME) __crc32__main
 
-set ::env(VERILOG_FILES) "inverter.v"
+set script_dir [file dirname [file normalize [info script]]]
+set ::env(VERILOG_FILES) "$script_dir/crc32.v"
+ 
+set ::env(CLOCK_TREE_SYNTH) 0
+set ::env(CLOCK_PORT) ""
 
 set ::env(FP_SIZING) "absolute"
 set ::env(DIE_AREA) "0 0 $::env(DIE_WIDTH) $::env(DIE_WIDTH)"
 set ::env(PL_TARGET_DENSITY) [expr {$::env(TARGET_DENSITY) / 100.0}]
 
-set ::env(CLOCK_TREE_SYNTH) 0
-set ::env(CLOCK_PORT) ""
-set ::env(DIODE_INSERTION_STRATEGY) 0
+# TODO(proppy) find out why LVS fails
+set ::env(RUN_LVS) 0
 ```
 
 ## Run OpenLane flow
 
 [OpenLane](https://github.com/The-OpenROAD-Project/OpenLane) is an automated RTL to GDSII flow based on several components including [OpenROAD](https://github.com/The-OpenROAD-Project/OpenROAD), [Yosys](https://github.com/YosysHQ/yosys), Magic, Netgen, Fault, CVC, SPEF-Extractor, CU-GR, Klayout and a number of custom scripts for design exploration and optimization.
 
-```python tags=[]
+```python colab={"base_uri": "https://localhost:8080/"} id="8gim7pEdozHv" outputId="3d4cccd8-bda2-4380-a1c3-5c9002560b7b" tags=[]
 #papermill_description=RunningOpenLaneFlow
 %env DIE_WIDTH={die_width}
 %env TARGET_DENSITY={target_density}
@@ -73,21 +110,26 @@ set ::env(DIODE_INSERTION_STRATEGY) 0
 
 ## Display layout
 
-Use [GDSII Tool Kit](https://github.com/heitzmann/gdstk) to convert the resulting GDSII file to SVG.
+Use [GDSII Tool Kit](https://github.com/heitzmann/gdstk) and [CairoSVG](https://cairosvg.org/) to convert the resulting GDSII file to PNG.
 
-```python
+```python colab={"base_uri": "https://localhost:8080/", "height": 1000} id="1uSEdmRhtXdl" outputId="6830cf44-e85f-48fc-aa84-84f794c25dc8"
 #papermill_description=RenderingGDS
 import pathlib
 import gdstk
+import cairosvg
+
 import IPython.display
 import scrapbook as sb
 
 gds_path = sorted(pathlib.Path(run_path).glob('*/results/final/gds/*.gds'))[-1]
 library = gdstk.read_gds(gds_path)
 top_cells = library.top_level()
-svg_path = pathlib.Path(run_path) / 'inverter.svg'
+svg_path = pathlib.Path(run_path) / 'xls.svg'
 top_cells[0].write_svg(svg_path)
-sb.glue('layout', IPython.display.SVG(svg_path), 'display', display=True)
+png_path = pathlib.Path(run_path) / 'xls.png'
+
+cairosvg.svg2png(url=str(svg_path), write_to=str(png_path))
+sb.glue('layout', IPython.display.Image(png_path), 'display', display=True)
 ```
 
 ## Dump flow report
@@ -138,8 +180,6 @@ sb.glue('metrics', df, 'pandas')
    .background_gradient(subset=['PL_TARGET_DENSITY'], cmap='Greens')
    .bar(color='lightblue', vmin=0.001, subset=['DIEAREA_mm^2']))
 ```
-
-Report metrics for hyper-parameters tuning.
 
 ```python
 #papermill_description=ReportingMetrics
