@@ -97,6 +97,7 @@ hpt_job = aiplatform.HyperparameterTuningJob(
 hpt_job.run()
 ```
 
+## Extract experiment notebooks
 ```python
 import scrapbook as sb
 from google.cloud import storage
@@ -113,8 +114,8 @@ for i in tqdm.tqdm(range(1, 501)):
             results_bucket,
             f'aiplatform-custom-job-2022-04-07-16:02:35.153/serv_out_{i}.ipynb'
         )
-    except:
-        pass
+    except Exception as e:
+        print(f'error extracting experiment {i}:', e)
 ```
 
 ```python tags=[]
@@ -122,6 +123,7 @@ import scrapbook as sb
 books = sb.read_notebooks('gs://aiplatform-custom-job-2022-04-07-16:02:35.153/')
 ```
 
+## Aggregate experiments results
 ```python
 import pandas as pd
 import tqdm
@@ -139,11 +141,13 @@ df = pd.concat(metrics(), ignore_index=True)
    .bar(color='lightblue', vmin=0.001, subset=['DIEAREA_mm^2']))
 ```
 
+## Plot power against area/density
 ```python
 df.plot.scatter(x='DIEAREA_mm^2', y='PL_TARGET_DENSITY', c='TOTAL_POWER',
                 cmap='cool', s=200, sharex=False)
 ```
 
+## Visualize experiments chronologically
 ```python
 from matplotlib import pyplot as plt
 from matplotlib import animation
@@ -173,6 +177,7 @@ anim.save('serv.gif', writer=animation.PillowWriter(fps=10))
 Image('serv.gif')
 ```
 
+## Map all the generate layouts
 ```python
 from tqdm import tqdm
 import io
