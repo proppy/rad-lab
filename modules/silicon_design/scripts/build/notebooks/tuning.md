@@ -36,7 +36,7 @@ location = 'us-central1'
 
 ```python tags=[]
 !gsutil mb {staging_bucket}
-!gsutil cp inverter.ipynb {staging_bucket}/inverter.ipynb
+!gsutil cp serv.ipynb {staging_bucket}/
 ```
 
 ## Create Parameters and Metrics specs
@@ -69,15 +69,47 @@ worker_pool_specs = [{
     'container_spec': {
         'image_uri': worker_image,
         'args': ['/usr/local/bin/papermill-launcher', 
-                 f'{staging_bucket}/inverter8.ipynb',
-                 '$AIP_MODEL_DIR/inverter_out.ipynb',
+                 f'{staging_bucket}/serv.ipynb',
+                 '$AIP_MODEL_DIR/serv_out.ipynb',
                  '--run_dir=/tmp']
     }
 }]
 
-custom_job = aiplatform.CustomJob(display_name='inverter-flow-job',
+custom_job = aiplatform.CustomJob(display_name='serv-flow-job',
                               worker_pool_specs=worker_pool_specs,
                               staging_bucket=staging_bucket)
+```
+
+```python
+# %load /usr/local/bin/papermill-launcher
+#!/usr/bin/env python
+import os.path
+import sys
+
+import papermill as pm
+
+def args(param_args):
+    while len(param_args):
+        arg = param_args.pop(0).replace('--', '')
+        if '=' in arg:
+            yield arg.split('=')
+        else:
+            val = params_args.pop(0)
+            yield arg, val
+
+def expand_path(p):
+    return os.path.normpath(
+        os.path.expandvars(p)
+    ).replace('gs:/', 'gs://')
+
+_, input_path, output_path, *params_args = sys.argv
+input_path = expand_path(input_path)
+output_path = expand_path(output_path)
+parameters = dict(
+    (k, expand_path(v))
+    for k, v in args(params_args)
+)
+pm.execute_notebook(input_path, output_path, parameters=parameters, progress_bar=False)
 ```
 
 ## Run Hyperparameter tuning job
@@ -97,120 +129,153 @@ hpt_job = aiplatform.HyperparameterTuningJob(
 hpt_job.run()
 ```
 
-## Extract experiment notebooks
+## Fetch notebooks for all study trials
+
 ```python
-import scrapbook as sb
+import pathlib
+
 from google.cloud import storage
 import tqdm
+
+dst_dir = pathlib.Path('results/')
+dst_dir.mkdir(exist_ok=True, parents=True)
 
 client = storage.Client()
 staging_bucket = client.bucket('catx-demo-radlab-staging')
 results_bucket = client.bucket('catx-demo-radlab-results')
 for i in tqdm.tqdm(range(1, 501)):
     src = staging_bucket.blob(f'aiplatform-custom-job-2022-04-07-16:02:35.153/{i}/model/serv_out.ipynb')
-    try:
-        blob = staging_bucket.copy_blob(
-        staging_bucket.blob(f'aiplatform-custom-job-2022-04-07-16:02:35.153/{i}/model/serv_out.ipynb'),
-            results_bucket,
-            f'aiplatform-custom-job-2022-04-07-16:02:35.153/serv_out_{i}.ipynb'
-        )
-    except Exception as e:
-        print(f'error extracting experiment {i}:', e)
+    dst = dst_dir / f'serv_out_{i}.ipynb'
+    with dst.open('wb') as f:
+        src.download_to_file(f)
 ```
+
+## Extract metrics from notebooks
 
 ```python tags=[]
 import scrapbook as sb
-books = sb.read_notebooks('gs://aiplatform-custom-job-2022-04-07-16:02:35.153/')
+books = sb.read_notebooks('results/')
 ```
 
-## Aggregate experiments results
 ```python
+import pathlib
+import math
+
 import pandas as pd
 import tqdm
-
 def metrics():
     for b in tqdm.tqdm(books):
+        trial_id = int(pathlib.Path(books[b].filename).stem.split('_')[-1])
         if 'metrics' in books[b].scraps:
-            yield books[b].scraps['metrics'].data
+            metrics = books[b].scraps['metrics'].data
+            yield trial_id, metrics['DIEAREA_mm^2'][0], metrics['PL_TARGET_DENSITY'][0], metrics['TOTAL_POWER'][0]
+        else:
+            params = books[b].parameters
+            die_width_mm = float(params.die_width) / 1000.0
+            target_density = float(params.target_density) / 100.0
+            yield trial_id, die_width_mm * die_width_mm, target_density, math.nan
         
-df = pd.concat(metrics(), ignore_index=True)
-(df.sort_values(['TOTAL_POWER']).style
-   .format({'area': '{:.8f}', 'density': '{:.2%}', 'power': '{:.8f}'})
+df = pd.DataFrame.from_records(metrics(), columns=['TRIAL_ID', 'DIEAREA_mm^2', 'PL_TARGET_DENSITY', 'TOTAL_POWER'], index='TRIAL_ID').sort_index()
+(df.sort_values(['TOTAL_POWER', 'DIEAREA_mm^2'], ascending=False).style
+   .format({'DIEAREA_mm^2': '{:.8f}', 'PL_TARGET_DENSITY': '{:.2%}', 'TOTAL_POWER': '{:.6f}'})
    .bar(subset=['TOTAL_POWER'], color='pink')
    .background_gradient(subset=['PL_TARGET_DENSITY'], cmap='Greens')
    .bar(color='lightblue', vmin=0.001, subset=['DIEAREA_mm^2']))
 ```
 
-## Plot power against area/density
+## Plot experiments
+
 ```python
 df.plot.scatter(x='DIEAREA_mm^2', y='PL_TARGET_DENSITY', c='TOTAL_POWER',
                 cmap='cool', s=200, sharex=False)
 ```
 
-## Visualize experiments chronologically
 ```python
 from matplotlib import pyplot as plt
 from matplotlib import animation
+from matplotlib import cm
+
 from tqdm import tqdm
 from IPython.display import Image
-from time import sleep
 import matplotlib.colors
 
+cool =  matplotlib.colormaps['cool']
+cool.set_bad(color='none')
 min_total_power = df['TOTAL_POWER'].min()
 max_total_power = df['TOTAL_POWER'].max()
 fig, ax = plt.subplots()
-fig.colorbar(cm.ScalarMappable(matplotlib.colors.Normalize(min_total_power, max_total_power), cmap='cool'), 
+fig.colorbar(cm.ScalarMappable(matplotlib.colors.Normalize(min_total_power, max_total_power), cmap=cool), 
              label='TOTAL_POWER',
              ax=ax)
 ax.set_xlabel('DIEAREA_mm^2')
-ax.set_xlabel('PL_TARGET_DENSITY')
+ax.set_ylabel('PL_TARGET_DENSITY')
+plt.close(fig) # hide current figure
 
 def generate_frames():
     for n in range(10, 500, 10):
         batch = df[0:n]
         yield [ax.scatter(
             batch['DIEAREA_mm^2'], batch['PL_TARGET_DENSITY'], c=batch['TOTAL_POWER'],
-            s=50, vmin=min_total_power, vmax=max_total_power, cmap='cool')]
+            s=50, vmin=min_total_power, vmax=max_total_power, cmap=cool, plotnonfinite=True, edgecolor='black')]
+
 frames = list(generate_frames())
 anim = animation.ArtistAnimation(fig, frames)
 anim.save('serv.gif', writer=animation.PillowWriter(fps=10))
 Image('serv.gif')
 ```
 
-## Map all the generate layouts
+## Render chip layouts
+
 ```python
+from matplotlib import pyplot as plt
+from matplotlib import animation
+from matplotlib import cm
 from tqdm import tqdm
+from IPython.display import Image
+from time import sleep
+import matplotlib.colors
 import io
 import base64
 import PIL
+import PIL.ImageOps
+import PIL.ImageDraw
+import numpy as np
 
-fig, axs = plt.subplots(25, 20, figsize=(100, 100))
-axs = axs.flatten()
 
 min_total_power = df['TOTAL_POWER'].min()
 max_total_power = df['TOTAL_POWER'].max()
 
 def images_with_power(n):
-    for i, b in enumerate(books):
-        book = books[b]
+    for trial_id, trial in df.iterrows():
+        book = books[f'serv_out_{trial_id}']
         if 'layout' in book.scraps:
-            metrics = book.scraps['metrics']
             layout = book.scraps['layout']
             f = io.BytesIO(base64.b64decode(layout.display.data['image/png']))
-            img = PIL.Image.open(f).convert('L')
-            total_power = metrics.data['TOTAL_POWER'][0]
+            img = PIL.Image.open(f)#.convert('L')
+            total_power = trial['TOTAL_POWER']
             power = (total_power - min_total_power) / (max_total_power - min_total_power)
-            yield img, power
+            yield trial_id, img, power
         else:
-            yield PIL.Image.new('RGBA', (100, 100)).convert('L'), 0
+            yield trial_id, PIL.Image.new('RGBA', (100, 100)).convert('L'), 0
         if i == n-1:
             break
 
+size = (500, 500)
+fig, ax = plt.subplots(figsize=size)
 cool = cm.get_cmap('cool')
 
-for i, (img, power) in tqdm(enumerate(images_with_power(500))):
-    color = np.array(cool(power)) * 255
-    axs[i].imshow(PIL.ImageOps.colorize(img, (0, 0, 0, 255), color))
-fig.savefig('ALLTHESERVs.png')
-fig
+def generate_frames():
+    for trial_id, img, power in tqdm(images_with_power(500)):
+        extrema = img.getextrema()
+        if extrema != (0,0):
+            #color = np.array(cool(power)) * 255
+            #img = PIL.ImageOps.colorize(img, (0, 0, 0, 255), color)
+            img = img.resize(size)
+            d = PIL.ImageDraw.Draw(img)
+            d.text((10, 10), f'SERV_{trial_id}', fill=(255, 255, 255, 255))
+            yield img
+
+frames = list(generate_frames())
+frames[0].save('ALLTHESERVS_RAW.gif', save_all=True, loop=0, append_images=frames[1:])
+Image('ALLTHESERVS_RAW.gif')
 ```
