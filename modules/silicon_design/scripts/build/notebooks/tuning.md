@@ -36,7 +36,7 @@ location = 'us-central1'
 
 ```python tags=[]
 !gsutil mb {staging_bucket}
-!gsutil cp serv.ipynb {staging_bucket}/
+!gsutil cp subservient.ipynb {staging_bucket}/
 ```
 
 ## Create Parameters and Metrics specs
@@ -69,47 +69,15 @@ worker_pool_specs = [{
     'container_spec': {
         'image_uri': worker_image,
         'args': ['/usr/local/bin/papermill-launcher', 
-                 f'{staging_bucket}/serv.ipynb',
-                 '$AIP_MODEL_DIR/serv_out.ipynb',
+                 f'{staging_bucket}/subservient.ipynb',
+                 '$AIP_MODEL_DIR/subservient_out.ipynb',
                  '--run_dir=/tmp']
     }
 }]
 
-custom_job = aiplatform.CustomJob(display_name='serv-flow-job',
+custom_job = aiplatform.CustomJob(display_name='subservient-flow-job',
                               worker_pool_specs=worker_pool_specs,
                               staging_bucket=staging_bucket)
-```
-
-```python
-# %load /usr/local/bin/papermill-launcher
-#!/usr/bin/env python
-import os.path
-import sys
-
-import papermill as pm
-
-def args(param_args):
-    while len(param_args):
-        arg = param_args.pop(0).replace('--', '')
-        if '=' in arg:
-            yield arg.split('=')
-        else:
-            val = params_args.pop(0)
-            yield arg, val
-
-def expand_path(p):
-    return os.path.normpath(
-        os.path.expandvars(p)
-    ).replace('gs:/', 'gs://')
-
-_, input_path, output_path, *params_args = sys.argv
-input_path = expand_path(input_path)
-output_path = expand_path(output_path)
-parameters = dict(
-    (k, expand_path(v))
-    for k, v in args(params_args)
-)
-pm.execute_notebook(input_path, output_path, parameters=parameters, progress_bar=False)
 ```
 
 ## Run Hyperparameter tuning job
@@ -118,13 +86,13 @@ pm.execute_notebook(input_path, output_path, parameters=parameters, progress_bar
 from google.cloud import aiplatform
 
 hpt_job = aiplatform.HyperparameterTuningJob(
-    display_name='inverter-tuning-job',
+    display_name='subservient-tuning-job',
     custom_job=custom_job,
     metric_spec=metric_spec,
     parameter_spec=parameter_spec,
-    max_trial_count=200,
-    parallel_trial_count=10,
-    max_failed_trial_count=200)
+    max_trial_count=10000,
+    parallel_trial_count=50,
+    max_failed_trial_count=10000)
 
 hpt_job.run()
 ```
@@ -134,18 +102,18 @@ hpt_job.run()
 ```python
 import pathlib
 
+last_trial_id = 3300
 from google.cloud import storage
 import tqdm
 
-dst_dir = pathlib.Path('results/')
+dst_dir = pathlib.Path('subservient-tuning-job-results/')
 dst_dir.mkdir(exist_ok=True, parents=True)
 
 client = storage.Client()
 staging_bucket = client.bucket('catx-demo-radlab-staging')
-results_bucket = client.bucket('catx-demo-radlab-results')
-for i in tqdm.tqdm(range(1, 501)):
-    src = staging_bucket.blob(f'aiplatform-custom-job-2022-04-07-16:02:35.153/{i}/model/serv_out.ipynb')
-    dst = dst_dir / f'serv_out_{i}.ipynb'
+for i in tqdm.tqdm(range(1, last_trial_id+1)):
+    src = staging_bucket.blob(f'aiplatform-custom-job-2022-05-12-12:42:55.725/{i}/model/subservient_out.ipynb')
+    dst = dst_dir / f'subservient_out_{i}.ipynb'
     with dst.open('wb') as f:
         src.download_to_file(f)
 ```
@@ -154,7 +122,7 @@ for i in tqdm.tqdm(range(1, 501)):
 
 ```python tags=[]
 import scrapbook as sb
-books = sb.read_notebooks('results/')
+books = sb.read_notebooks(str(dst_dir))
 ```
 
 ```python
@@ -176,7 +144,9 @@ def metrics():
             yield trial_id, die_width_mm * die_width_mm, target_density, math.nan
         
 df = pd.DataFrame.from_records(metrics(), columns=['TRIAL_ID', 'DIEAREA_mm^2', 'PL_TARGET_DENSITY', 'TOTAL_POWER'], index='TRIAL_ID').sort_index()
-(df.sort_values(['TOTAL_POWER', 'DIEAREA_mm^2'], ascending=False).style
+(df.dropna()
+   .sort_values(['DIEAREA_mm^2', 'TOTAL_POWER'], ascending=[True, True])
+   .style
    .format({'DIEAREA_mm^2': '{:.8f}', 'PL_TARGET_DENSITY': '{:.2%}', 'TOTAL_POWER': '{:.6f}'})
    .bar(subset=['TOTAL_POWER'], color='pink')
    .background_gradient(subset=['PL_TARGET_DENSITY'], cmap='Greens')
@@ -186,8 +156,14 @@ df = pd.DataFrame.from_records(metrics(), columns=['TRIAL_ID', 'DIEAREA_mm^2', '
 ## Plot experiments
 
 ```python
-df.plot.scatter(x='DIEAREA_mm^2', y='PL_TARGET_DENSITY', c='TOTAL_POWER',
-                cmap='cool', s=200, sharex=False)
+import matplotlib.colors
+
+cool =  matplotlib.colormaps['cool']
+cool.set_bad(color='none')
+ax = df.plot.scatter(x='DIEAREA_mm^2', y='PL_TARGET_DENSITY', c='TOTAL_POWER',
+                cmap=cool, s=50, sharex=False, plotnonfinite=False, edgecolor='black')
+plt.savefig('subservient.png')
+ax
 ```
 
 ```python
@@ -197,10 +173,7 @@ from matplotlib import cm
 
 from tqdm import tqdm
 from IPython.display import Image
-import matplotlib.colors
 
-cool =  matplotlib.colormaps['cool']
-cool.set_bad(color='none')
 min_total_power = df['TOTAL_POWER'].min()
 max_total_power = df['TOTAL_POWER'].max()
 fig, ax = plt.subplots()
@@ -212,7 +185,7 @@ ax.set_ylabel('PL_TARGET_DENSITY')
 plt.close(fig) # hide current figure
 
 def generate_frames():
-    for n in range(10, 500, 10):
+    for n in range(50, last_trial_id, 50):
         batch = df[0:n]
         yield [ax.scatter(
             batch['DIEAREA_mm^2'], batch['PL_TARGET_DENSITY'], c=batch['TOTAL_POWER'],
@@ -220,8 +193,8 @@ def generate_frames():
 
 frames = list(generate_frames())
 anim = animation.ArtistAnimation(fig, frames)
-anim.save('serv.gif', writer=animation.PillowWriter(fps=10))
-Image('serv.gif')
+anim.save('subservient.gif', writer=animation.PillowWriter(fps=10))
+Image('subservient.gif')
 ```
 
 ## Render chip layouts
@@ -245,37 +218,28 @@ import numpy as np
 min_total_power = df['TOTAL_POWER'].min()
 max_total_power = df['TOTAL_POWER'].max()
 
-def images_with_power(n):
-    for trial_id, trial in df.iterrows():
-        book = books[f'serv_out_{trial_id}']
-        if 'layout' in book.scraps:
-            layout = book.scraps['layout']
-            f = io.BytesIO(base64.b64decode(layout.display.data['image/png']))
-            img = PIL.Image.open(f)#.convert('L')
-            total_power = trial['TOTAL_POWER']
-            power = (total_power - min_total_power) / (max_total_power - min_total_power)
-            yield trial_id, img, power
-        else:
-            yield trial_id, PIL.Image.new('RGBA', (100, 100)).convert('L'), 0
-        if i == n-1:
-            break
+def images_with_power():
+    for trial_id, trial in df.dropna().iterrows():
+        book = books[f'subservient_out_{trial_id}']
+        layout = book.scraps['layout']
+        f = io.BytesIO(base64.b64decode(layout.display.data['image/png']))
+        img = PIL.Image.open(f)#.convert('L')
+        total_power = trial['TOTAL_POWER']
+        power = (total_power - min_total_power) / (max_total_power - min_total_power)
+        yield trial_id, img, power
 
 size = (500, 500)
 fig, ax = plt.subplots(figsize=size)
 cool = cm.get_cmap('cool')
 
 def generate_frames():
-    for trial_id, img, power in tqdm(images_with_power(500)):
-        extrema = img.getextrema()
-        if extrema != (0,0):
-            #color = np.array(cool(power)) * 255
-            #img = PIL.ImageOps.colorize(img, (0, 0, 0, 255), color)
-            img = img.resize(size)
-            d = PIL.ImageDraw.Draw(img)
-            d.text((10, 10), f'SERV_{trial_id}', fill=(255, 255, 255, 255))
-            yield img
+    for trial_id, img, power in tqdm(images_with_power()):
+        img = img.resize(size)
+        d = PIL.ImageDraw.Draw(img)
+        d.text((10, 10), f'SUBSERVIENT_{trial_id}', fill=(255, 255, 255, 255))
+        yield img
 
 frames = list(generate_frames())
-frames[0].save('ALLTHESERVS_RAW.gif', save_all=True, loop=0, append_images=frames[1:])
-Image('ALLTHESERVS_RAW.gif')
+frames[0].save('allthesubservients.gif', save_all=True, loop=0, append_images=frames[1:])
+Image('allthesubservients.gif')
 ```
