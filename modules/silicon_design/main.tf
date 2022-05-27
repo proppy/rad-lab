@@ -262,38 +262,6 @@ resource "google_project_iam_member" "ai_notebook_user_role2" {
   role     = "roles/viewer"
 }
 
-resource "google_notebooks_runtime" "ai_notebook_managed" {
-  count        = var.notebook_count
-  project      = local.project.project_id
-  name         = local.notebook_names[count.index]
-  location     = local.region
-
-  access_config {
-    access_type = "SINGLE_USER"
-    runtime_owner = "proppy@google.com"
-  }
-  virtual_machine {
-    virtual_machine_config {
-      machine_type = var.machine_type
-      data_disk {
-        initialize_params {
-          disk_size_gb = "100"
-          disk_type = "PD_STANDARD"
-        }
-      }
-      container_images {
-        repository = "${google_artifact_registry_repository.containers_repo.location}-docker.pkg.dev/${local.project.project_id}/${google_artifact_registry_repository.containers_repo.repository_id}/${var.image_name}"
-        tag = local.image_tag
-      }
-    }
-  }
-
-  depends_on = [
-    time_sleep.wait_120_seconds,
-    null_resource.build_and_push_image,
-  ]
-}
-
 resource "google_notebooks_instance" "ai_notebook" {
   count        = var.notebook_count
   project      = local.project.project_id
