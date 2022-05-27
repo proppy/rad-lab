@@ -45,7 +45,7 @@ steps:
     cd scripts/build/images/
     gsutil cp gs://compute-image-tools/release/linux/daisy .
     chmod +x daisy
-    echo gcloud compute images describe $_COMPUTE_IMAGE-$_IMAGE_TAG || ./daisy -project $PROJECT_ID -zone $_ZONE -variables image_name=$_COMPUTE_IMAGE,image_tag=$_IMAGE_TAG,network=$_COMPUTE_NETWORK,subnet=$_COMPUTE_SUBNET compute_image.wf.json
+    gcloud compute images describe $_COMPUTE_IMAGE-$_IMAGE_TAG || ./daisy -project $PROJECT_ID -zone $_ZONE -variables image_name=$_COMPUTE_IMAGE,image_tag=$_IMAGE_TAG,network=$_COMPUTE_NETWORK,subnet=$_COMPUTE_SUBNET compute_image.wf.json
   waitFor: ['-']    
 - id: 'container-image-pull'
   name: 'gcr.io/cloud-builders/docker'

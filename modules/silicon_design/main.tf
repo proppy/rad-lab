@@ -43,7 +43,7 @@ locals {
     "roles/notebooks.admin",
     "roles/compute.instanceAdmin",
     "roles/iam.serviceAccountUser",
-    "roles/storage.objectViewer",
+    "roles/storage.admin",
     "roles/aiplatform.admin",
   ]
 
