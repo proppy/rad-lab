@@ -258,7 +258,7 @@ resource "google_artifact_registry_repository" "containers_repo" {
 
 resource "google_storage_bucket" "notebooks_bucket" {
   project                     = local.project.project_id
-  name                        = "${local.project.project_id}-silicon-design-notebooks"
+  name                        = var.notebooks_bucket_name
   location                    = local.region
   force_destroy               = true
   uniform_bucket_level_access = true

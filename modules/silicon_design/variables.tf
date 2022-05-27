@@ -144,3 +144,10 @@ variable "image_name" {
   type        = string
   default     = "silicon-design-ubuntu-2004"
 }
+
+variable "notebooks_bucket_name" {
+  description = "Notebooks GCS Bucket Name"
+  type        = string
+  default     = "silicon-design-notebooks"
+
+}

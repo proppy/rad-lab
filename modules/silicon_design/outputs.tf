@@ -29,11 +29,6 @@ output "notebooks_instance_names" {
   value       = join(", ", google_notebooks_instance.ai_notebook[*].name)
 }
 
-output "notebooks_bucket_name" {
-  description = "Notebooks GCS Bucket Name"
-  value       = google_storage_bucket.notebooks_bucket.name
-}
-
 output "artifact_registry_repository_id" {
   description = "Artifact Registry Repository ID"
   value       = google_artifact_registry_repository.containers_repo.repository_id
