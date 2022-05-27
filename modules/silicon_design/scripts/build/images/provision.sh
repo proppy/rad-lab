@@ -28,7 +28,7 @@ gsutil -m rsync ${DAISY_SOURCES_PATH}/provision/ ${PROVISION_DIR}/ || true
 
 echo "DaisyStatus: installing conda-eda environment"
 /opt/conda/bin/conda install --yes --prefix /opt/conda/ mamba
-/opt/conda/bin/mamba env update --prefix /opt/conda/ --file ${PROVISION_DIR}/environment.yml
+/opt/conda/bin/mamba env update --yes --update-all --prefix /opt/conda/ --file ${PROVISION_DIR}/environment.yml
 
 echo "DaisyStatus: installing OpenLane"
 git clone --depth 1 -b ${OPENLANE_VERSION} https://github.com/The-OpenROAD-Project/OpenLane /OpenLane
