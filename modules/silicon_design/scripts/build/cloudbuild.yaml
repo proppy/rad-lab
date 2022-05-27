@@ -56,14 +56,14 @@ steps:
 - id: 'container-image-build'
   name: 'gcr.io/cloud-builders/docker'
   args: ['build', '-t', '$_CONTAINER_IMAGE:$_IMAGE_TAG', '--cache-from', '$_CONTAINER_IMAGE:latest', './scripts/build/images']
-  waitFor: ['container-image-pull']  
+  waitFor: ['container-image-pull']
 - id: 'container-image-tag'
   name: 'gcr.io/cloud-builders/docker'
   args: ['tag', '$_CONTAINER_IMAGE:$_IMAGE_TAG', '$_CONTAINER_IMAGE:latest']
   waitFor: ['container-image-build']
 - id: 'container-image-test'
   name: 'gcr.io/cloud-builders/docker'
-  args: ['run', '$_CONTAINER_IMAGE:$BUILD_ID', 'flow.tcl', '-design', 'inverter']  
+  args: ['run', '$_CONTAINER_IMAGE:$_IMAGE_TAG', 'flow.tcl', '-design', 'inverter']  
   waitFor: ['container-image-tag']  
 images:
 - '$_CONTAINER_IMAGE:$_IMAGE_TAG'
