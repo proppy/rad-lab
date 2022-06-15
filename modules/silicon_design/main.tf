@@ -46,6 +46,11 @@ locals {
     "roles/storage.objectViewer",
   ]
 
+  cloudbuild_sa_project_roles = [
+    "roles/compute.admin",
+    "roles/storage.admin",
+  ]
+
   image_builder_sa_project_roles = [
     "roles/compute.instanceAdmin",
     "roles/compute.storageAdmin",
@@ -167,6 +172,25 @@ resource "google_project_iam_member" "sa_p_notebook_permissions" {
   role     = each.value
 }
 
+resource "google_project_service_identity" "sa_cloudbuild_identity" {
+  provider = google-beta
+  project  = local.project.project_id  
+  service = "cloudbuild.googleapis.com"
+}
+
+resource "google_project_iam_member" "sa_cloudbuild_permissions" {
+  for_each = toset(local.cloudbuild_sa_project_roles)
+  member   = "serviceAccount:${google_project_service_identity.sa_cloudbuild_identity.email}"
+  project  = local.project.project_id
+  role     = each.value
+}
+
+resource "google_service_account_iam_member" "sa_cloudbuild_image_builder_access" {
+  member             = "serviceAccount:${google_project_service_identity.sa_cloudbuild_identity.email}"
+  role               = "roles/iam.serviceAccountUser"
+  service_account_id = google_service_account.sa_image_builder_identity.id
+}
+
 resource "google_service_account" "sa_image_builder_identity" {
   project    = local.project.project_id
   account_id = "sa-image-builder-identity"
@@ -285,5 +309,7 @@ resource "null_resource" "build_and_push_image" {
     google_artifact_registry_repository.containers_repo,
     google_storage_bucket.notebooks_bucket,
     google_project_iam_member.sa_image_builder_permissions,
+    google_project_iam_member.sa_cloudbuild_permissions,
+    google_service_account_iam_member.sa_cloudbuild_image_builder_access,
   ]
 }
