@@ -20,7 +20,7 @@ ENV OPENLANE_VERSION=master
 ENV PROVISION_DIR=/tmp/provision
 RUN cd /opt/conda && curl -Ls https://micro.mamba.pm/api/micromamba/linux-64/latest | tar -xvj bin/micromamba
 RUN /opt/conda/bin/micromamba install -vvv --yes -p /opt/conda --strict-channel-priority -c litex-hub -c main openroad=2.0_3818_g2ae9162aa open_pdks.sky130a magic netgen yosys=0.17 iverilog xls
-RUN /opt/conda/bin/micromamba install -vvv --yes -p /opt/conda --strict-channel-priority -c conda-forge gdstk ngspice-lib tcllib
+RUN /opt/conda/bin/micromamba install -vvv --yes -p /opt/conda --strict-channel-priority -c conda-forge gdstk ngspice-lib tcllib pymeep=*=mpi_mpich_*
 RUN /opt/conda/bin/python -m pip install pyyaml click pandas pyspice gdsfactory klayout scrapbook[gcs] google-cloud-aiplatform cloudml-hypertune
 RUN git clone --depth 1 -b ${OPENLANE_VERSION} https://github.com/The-OpenROAD-Project/OpenLane /OpenLane
 COPY provision/env.tcl /OpenLane/install/
