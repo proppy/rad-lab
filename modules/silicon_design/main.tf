@@ -46,11 +46,10 @@ locals {
     "roles/storage.objectViewer",
   ]
 
-  cloudbuild_sa_project_roles = [
+  image_builder_sa_project_roles = [
     "roles/compute.instanceAdmin",
     "roles/compute.storageAdmin",
     "roles/storage.admin",
-    "roles/iam.serviceAccountUser"
   ]
 
   project_services = var.enable_services ? [
@@ -168,16 +167,15 @@ resource "google_project_iam_member" "sa_p_notebook_permissions" {
   role     = each.value
 }
 
-resource "google_project_service_identity" "sa_cloudbuild_identity" {
-  provider = google-beta
-  project  = local.project.project_id  
-  service = "cloudbuild.googleapis.com"
+resource "google_service_account" "sa_image_builder_identity" {
+  project    = local.project.project_id
+  account_id = "sa-image-builder-identity"
 }
 
-resource "google_project_iam_member" "sa_p_cloudbuild_permissions" {
-  for_each = toset(local.cloudbuild_sa_project_roles)
+resource "google_project_iam_member" "sa_image_builder_permissions" {
+  for_each = toset(local.image_builder_sa_project_roles)
   project  = local.project.project_id
-  member   =  "serviceAccount:${google_project_service_identity.sa_cloudbuild_identity.email}"
+  member   = "serviceAccount:${google_service_account.sa_image_builder_identity.email}"
   role     = each.value
 }
 
@@ -280,12 +278,12 @@ resource "null_resource" "build_and_push_image" {
 
   provisioner "local-exec" {
     working_dir = path.module
-    command     = "scripts/build/build.sh ${local.project.project_id} ${var.zone} ${var.image_name} ${google_artifact_registry_repository.containers_repo.location}-docker.pkg.dev/${local.project.project_id}/${google_artifact_registry_repository.containers_repo.repository_id}/${var.image_name} ${google_storage_bucket.notebooks_bucket.name} ${local.network.id} ${local.subnet.id} ${google_project_service_identity.sa_cloudbuild_identity.email}"
+    command     = "scripts/build/build.sh ${local.project.project_id} ${var.zone} ${var.image_name} ${google_artifact_registry_repository.containers_repo.location}-docker.pkg.dev/${local.project.project_id}/${google_artifact_registry_repository.containers_repo.repository_id}/${var.image_name} ${google_storage_bucket.notebooks_bucket.name} ${local.network.id} ${local.subnet.id} ${google_service_account.sa_image_builder_identity.email}"
   }
 
   depends_on = [
     google_artifact_registry_repository.containers_repo,
     google_storage_bucket.notebooks_bucket,
-    google_project_iam_member.sa_p_cloudbuild_permissions,
+    google_project_iam_member.sa_image_builder_permissions,
   ]
 }
