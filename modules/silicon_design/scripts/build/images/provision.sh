@@ -28,9 +28,9 @@ gsutil -m rsync ${DAISY_SOURCES_PATH}/provision/ ${PROVISION_DIR}/ || true
 
 echo "DaisyStatus: installing conda-eda environment"
 cd /opt/conda && curl -Ls https://micro.mamba.pm/api/micromamba/linux-64/latest | tar -xvj bin/micromamba
-/opt/conda/bin/micromamba install -vvv --yes -p /opt/conda --strict-channel-priority -c litex-hub -c main openroad=2.0_3818_g2ae9162aa open_pdks.sky130a magic netgen yosys=0.17 iverilog xls
-/opt/conda/bin/micromamba install -vvv --yes -p /opt/conda --strict-channel-priority -c conda-forge gdstk ngspice-lib tcllib
-/opt/conda/bin/python -m pip install pyyaml click pandas pyspice gdsfactory klayout scrapbook[gcs] google-cloud-aiplatform cloudml-hypertune
+/opt/conda/bin/micromamba install -vvv --yes --strict-channel-priority -p /opt/conda -c litex-hub -c main openroad=2.0_3976* open_pdks.sky130a=1.0.313* magic netgen yosys=0.17* iverilog
+/opt/conda/bin/micromamba install -vvv --yes --strict-channel-priority -p /opt/conda -c litex-hub -c conda-forge xls gdstk pyspice tcllib pymeep=*=mpi_mpich_*
+/opt/conda/bin/python -m pip install pyyaml click pandas gdsfactory klayout scrapbook[gcs] google-cloud-aiplatform cloudml-hypertune
 
 echo "DaisyStatus: installing OpenLane"
 git clone --depth 1 -b ${OPENLANE_VERSION} https://github.com/The-OpenROAD-Project/OpenLane /OpenLane
