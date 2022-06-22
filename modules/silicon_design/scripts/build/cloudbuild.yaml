@@ -55,6 +55,10 @@ steps:
   name: 'gcr.io/cloud-builders/docker'
   args: ['tag', '$_CONTAINER_IMAGE:$BUILD_ID', '$_CONTAINER_IMAGE:latest']
   waitFor: ['container-image-build']
+- id: 'container-image-test'
+  name: 'gcr.io/cloud-builders/docker'
+  args: ['run', '$_CONTAINER_IMAGE:$BUILD_ID', 'flow.tcl', '-design', 'inverter']  
+  waitFor: ['container-image-tag']  
 images:
 - '$_CONTAINER_IMAGE:$BUILD_ID'
 - '$_CONTAINER_IMAGE:latest'
