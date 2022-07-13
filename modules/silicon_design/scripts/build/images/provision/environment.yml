@@ -28,6 +28,7 @@ dependencies:
   - pip
   - tcllib
   - iverilog
+  - xls
   - pip:
     - pyyaml
     - click
