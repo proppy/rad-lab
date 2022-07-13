@@ -22,3 +22,6 @@ set ::env(RUN_CVC) 0
 set ::env(RUN_KLAYOUT_XOR) 0
 set ::env(RUN_KLAYOUT_DRC) 0
 set ::env(RUN_KLAYOUT) 0
+# https://github.com/The-OpenROAD-Project/OpenLane/issues/1195
+set ::env(DIODE_INSERTION_STRATEGY) 0
+set ::env(USE_ARC_ANTENNA_CHECK) 0
