@@ -21,7 +21,7 @@ dependencies:
   - magic
   - openroad
   - netgen
-  - yosys>=0.15
+  - yosys
   - gdstk
   - ngspice-lib
   - python
