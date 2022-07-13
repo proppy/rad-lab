@@ -15,3 +15,6 @@
 
 export OPENLANE_ROOT=/OpenLane
 export PATH=$OPENLANE_ROOT:$OPENLANE_ROOT/scripts:$PATH
+. /opt/conda/etc/profile.d/conda.sh
+conda activate base
+conda activate silicon

@@ -31,8 +31,8 @@ gsutil -m rsync ${DAISY_SOURCES_PATH}/provision/ ${PROVISION_DIR}/ || true
 fi
 
 echo "DaisyStatus: installing conda-eda environment"
-/opt/conda/bin/conda install --yes --prefix /opt/conda/ mamba
-/opt/conda/bin/mamba env update --prefix /opt/conda/ --file ${PROVISION_DIR}/environment.yml
+curl -Ls https://micro.mamba.pm/api/micromamba/linux-64/latest | tar -C /usr/local -xvj bin/micromamba
+micromamba create --yes -r /opt/conda -n silicon --file ${PROVISION_DIR}/environment.yml
 
 echo "DaisyStatus: installing OpenLane"
 git clone --depth 1 -b ${OPENLANE_VERSION} https://github.com/The-OpenROAD-Project/OpenLane /OpenLane
@@ -49,5 +49,8 @@ curl --silent  https://patch-diff.githubusercontent.com/raw/The-OpenROAD-Project
 
 echo "DaisyStatus: adding profile hook"
 cp ${PROVISION_DIR}/profile.sh /etc/profile.d/silicon-design-profile.sh
+
+echo "DaisyStatus: patch entrypoint"
+sed -i -e 's/conda activate base/conda activate base\nconda activate silicon/' /entrypoint.sh
 
 echo "DaisySuccess: done"
