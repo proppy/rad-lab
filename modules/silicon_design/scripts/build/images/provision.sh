@@ -44,7 +44,7 @@ for tool in yosys netgen
 do
   /opt/conda/bin/conda list -c ${tool} > /OpenLane/install/build/versions/${tool}
 done
-echo 'install.tcl' >> /OpenLane/configuration/load_order.txt
+echo ' install.tcl' >> /OpenLane/configuration/load_order.txt
 
 echo "DaisyStatus: adding profile hook"
 cp ${PROVISION_DIR}/profile.sh /etc/profile.d/silicon-design-profile.sh
