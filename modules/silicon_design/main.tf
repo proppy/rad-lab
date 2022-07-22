@@ -149,7 +149,7 @@ module "vpc_ai_notebook" {
 
   firewall_rules = [
     {
-      name        = "fw-silicon-design-notebook-allow-internal"
+      name        = "${var.name}-allow-internal"
       description = "Firewall rule to allow traffic on all ports inside *vpc-silicon-design* VPC network."
       priority    = 65534
       ranges      = ["10.0.0.0/8"]
@@ -171,7 +171,7 @@ module "vpc_ai_notebook" {
 
 resource "google_service_account" "sa_p_notebook" {
   project      = local.project.project_id
-  account_id   = format("sa-p-notebook-%s", local.random_id)
+  account_id   = "${var.name}-sa-notebook"
   display_name = "Notebooks in trusted environment"
 }
 
