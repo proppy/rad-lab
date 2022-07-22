@@ -171,7 +171,7 @@ module "vpc_ai_notebook" {
 
 resource "google_service_account" "sa_p_notebook" {
   project      = local.project.project_id
-  account_id   = "${var.name}-sa-notebook"
+  account_id   = "${var.name}-sa"
   display_name = "Notebooks in trusted environment"
 }
 
