@@ -39,12 +39,13 @@ git clone --depth 1 -b ${OPENLANE_VERSION} https://github.com/The-OpenROAD-Proje
 
 echo "DaisyStatus: patching OpenLane"
 cp ${PROVISION_DIR}/install.tcl /OpenLane/configuration/
+echo ' install.tcl' >> /OpenLane/configuration/load_order.txt
 mkdir -p /OpenLane/install/build/versions
 for tool in yosys netgen
 do
   /opt/conda/bin/conda list -c ${tool} > /OpenLane/install/build/versions/${tool}
 done
-echo ' install.tcl' >> /OpenLane/configuration/load_order.txt
+curl -L https://github.com/The-OpenROAD-Project/OpenLane/pull/1229.patch | patch -p1 -d /OpenLane
 
 echo "DaisyStatus: adding profile hook"
 cp ${PROVISION_DIR}/profile.sh /etc/profile.d/silicon-design-profile.sh
