@@ -101,8 +101,12 @@ resource "google_project_service" "enabled_services" {
   for_each                   = toset(local.project_services)
   project                    = local.project.project_id
   service                    = each.value
-  disable_dependent_services = true
-  disable_on_destroy         = true
+  disable_dependent_services = false
+  disable_on_destroy         = false
+  
+  lifecycle {
+    prevent_destroy = true
+  }
 
   depends_on = [
     module.project_radlab_silicon_design
