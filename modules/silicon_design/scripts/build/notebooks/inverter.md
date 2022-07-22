@@ -37,6 +37,7 @@ See [OpenLane Variables information](https://github.com/The-OpenROAD-Project/Ope
 
 ```python
 %%bash -c 'cat > config.tcl; tclsh config.tcl'
+%%bash -c 'cat > config.tcl; tclsh config.tcl'
 set ::env(DESIGN_NAME) inverter
 
 set ::env(VERILOG_FILES) "inverter.v"
