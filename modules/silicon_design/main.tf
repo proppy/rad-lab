@@ -297,7 +297,7 @@ resource "null_resource" "build_and_push_image" {
     workflow_sha      = filesha1("${path.module}/scripts/build/images/compute_image.wf.json")    
     dockerfile_sha      = filesha1("${path.module}/scripts/build/images/Dockerfile")
     environment_sha        = filesha1("${path.module}/scripts/build/images/provision/environment.yml")    
-    env_sha        = filesha1("${path.module}/scripts/build/images/provision/env.tcl")    
+    env_sha        = filesha1("${path.module}/scripts/build/images/provision/install.tcl")    
     profile_sha        = filesha1("${path.module}/scripts/build/images/provision/profile.sh")    
     notebook_sha        = filesha1("${path.module}/scripts/build/notebooks/inverter.md")
   }
