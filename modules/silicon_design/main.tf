@@ -294,7 +294,6 @@ resource "google_storage_bucket" "notebooks_bucket" {
 resource "null_resource" "build_and_push_image" {
   triggers = {
     cloudbuild_yaml_sha = filesha1("${path.module}/scripts/build/cloudbuild.yaml")
-    build_script_sha    = filesha1("${path.module}/scripts/build/build.sh")
     workflow_sha      = filesha1("${path.module}/scripts/build/images/compute_image.wf.json")    
     dockerfile_sha      = filesha1("${path.module}/scripts/build/images/Dockerfile")
     environment_sha        = filesha1("${path.module}/scripts/build/images/provision/environment.yml")    
