@@ -14,6 +14,11 @@
  * limitations under the License.
  */
 
+variable "name" {
+  description = "Name prefix used for naming child radlab resources"
+  type        = string
+}
+
 variable "billing_account_id" {
   description = "Billing Account associated to the GCP Resources"
   type        = string
@@ -70,7 +75,7 @@ variable "machine_type" {
 variable "network_name" {
   description = "Name of the network to be created."
   type        = string
-  default     = "ai-notebook"
+  default     = null
 }
 
 variable "notebook_count" {
@@ -124,7 +129,7 @@ variable "set_trustedimage_project_policy" {
 variable "subnet_name" {
   description = "Name of the subnet where to deploy the Notebooks."
   type        = string
-  default     = "subnet-ai-notebook"
+  default     = null  
 }
 
 variable "trusted_users" {

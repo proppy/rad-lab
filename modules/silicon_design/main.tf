@@ -3,7 +3,7 @@
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+nnn * You may obtain a copy of the License at
  *
  *      http://www.apache.org/licenses/LICENSE-2.0
  *
@@ -26,6 +26,9 @@ locals {
     )
   region = join("-", [split("-", var.zone)[0], split("-", var.zone)[1]])
 
+  network_name = var.network_name != null ? var.network_name : "${var.name}-network"
+  subnet_name = var.subnet_name != null ? var.subnet_name : "${var.name}-subnet"
+
   network = (
     var.create_network
     ? try(module.vpc_ai_notebook.0.network.network, null)
@@ -34,7 +37,7 @@ locals {
 
   subnet = (
     var.create_network
-    ? try(module.vpc_ai_notebook.0.subnets["${local.region}/${var.subnet_name}"], null)
+    ? try(module.vpc_ai_notebook.0.subnets["${local.region}/${local.subnet_name}"], null)
     : try(data.google_compute_subnetwork.default.0, null)
   )
 
@@ -64,7 +67,7 @@ locals {
     "artifactregistry.googleapis.com",
   ] : []
 
-  notebook_names = length(var.notebook_names) > 0 ? var.notebook_names : [for i in range(var.notebook_count): "silicon-design-notebook-${i}"]
+  notebook_names = length(var.notebook_names) > 0 ? var.notebook_names : [for i in range(var.notebook_count): "${var.name}-nodebook-${i}"]
 }
 
 resource "random_id" "default" {
@@ -109,13 +112,13 @@ resource "google_project_service" "enabled_services" {
 data "google_compute_network" "default" {
   count   = var.create_network ? 0 : 1
   project = local.project.project_id
-  name    = var.network_name
+  name    = local.network_name
 }
 
 data "google_compute_subnetwork" "default" {
   count   = var.create_network ? 0 : 1
   project = local.project.project_id
-  name    = var.subnet_name
+  name    = local.subnet_name
   region  = local.region
 }
 
@@ -125,13 +128,13 @@ module "vpc_ai_notebook" {
   version = "~> 3.0"
 
   project_id   = local.project.project_id
-  network_name = var.network_name
+  network_name = local.network_name
   routing_mode = "GLOBAL"
   description  = "VPC Network created via Terraform"
 
   subnets = [
     {
-      subnet_name           = var.subnet_name
+      subnet_name           = local.subnet_name
       subnet_ip             = var.ip_cidr_range
       subnet_region         = local.region
       description           = "Subnetwork inside *vpc-silicon-design* VPC network, created via Terraform"
@@ -269,7 +272,7 @@ resource "google_artifact_registry_repository" "containers_repo" {
 
   project       = local.project.project_id
   location      = local.region
-  repository_id = "containers"
+  repository_id = "${var.name}-containers"
   description   = "container image repository"
   format        = "DOCKER"
 
@@ -280,7 +283,7 @@ resource "google_artifact_registry_repository" "containers_repo" {
 
 resource "google_storage_bucket" "notebooks_bucket" {
   project                     = local.project.project_id
-  name                        = "${local.project.project_id}-silicon-design-notebooks"
+  name                        = "${var.name}-notebooks"
   location                    = local.region
   force_destroy               = true
   uniform_bucket_level_access = true
