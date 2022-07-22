@@ -49,7 +49,4 @@ echo 'install.tcl' >> /OpenLane/configuration/load_order.txt
 echo "DaisyStatus: adding profile hook"
 cp ${PROVISION_DIR}/profile.sh /etc/profile.d/silicon-design-profile.sh
 
-echo "DaisyStatus: patch entrypoint"
-sed -i -e 's/conda activate base/conda activate base\nconda activate silicon/' /entrypoint.sh
-
 echo "DaisySuccess: done"
