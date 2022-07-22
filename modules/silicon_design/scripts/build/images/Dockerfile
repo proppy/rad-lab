@@ -19,5 +19,6 @@ COPY provision.sh /tmp/provision.sh
 COPY provision/ /tmp/provision/
 RUN bash -x /tmp/provision.sh
 RUN sed -i -e 's/conda activate base/conda activate base\nconda activate silicon/' /entrypoint.sh
+RUN sed -i -e 's@/opt/conda@/opt/conda/envs/silicon@' /run_jupyter.sh
 ENV OPENLANE_ROOT=/OpenLane
 ENV PATH=$OPENLANE_ROOT:$OPENLANE_ROOT/scripts:$PATH
