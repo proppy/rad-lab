@@ -164,7 +164,7 @@ module "vpc_ai_notebook" {
 
 resource "google_service_account" "sa_p_notebook" {
   project      = local.project.project_id
-  account_id   = "${var.name}-sa"
+  account_id   = "${var.name}-n-sa"
   display_name = "Notebooks in trusted environment"
 }
 
@@ -196,7 +196,7 @@ resource "google_service_account_iam_member" "sa_cloudbuild_image_builder_access
 
 resource "google_service_account" "sa_image_builder_identity" {
   project    = local.project.project_id
-  account_id = "sa-image-builder-identity"
+  account_id = "${var.name}-i-sa"
 }
 
 resource "google_project_iam_member" "sa_image_builder_permissions" {
