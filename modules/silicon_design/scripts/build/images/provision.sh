@@ -25,7 +25,7 @@ PROVISION_DIR=/provision
 SYSTEM_NAME=$(dmidecode -s system-product-name || true)
 
 echo "DaisyStatus: install system dependencies"
-apt-get update && apt-get -yq install locales locales-all time
+apt-get update && apt-get -o DPkg::Lock::Timeout=-1 -yq install locales locales-all time
 
 if [ -n "$(echo ${SYSTEM_NAME} | grep 'Google Compute Engine')" ]; then
 echo "DaisyStatus: fetching provisioning script"
