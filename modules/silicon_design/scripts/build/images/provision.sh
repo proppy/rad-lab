@@ -21,10 +21,14 @@ env
 OPENLANE_VERSION=master
 PROVISION_DIR=/tmp/provision
 
+SYSTEM_NAME=$(dmidecode -s system-product-name || true)
+
+if [ -n "$(echo ${SYSTEM_NAME} | grep 'Google Compute Engine')" ]; then
 echo "DaisyStatus: fetching provisioning script"
 DAISY_SOURCES_PATH=$(curl -H 'Metadata-Flavor: Google' http://metadata.google.internal/computeMetadata/v1/instance/attributes/daisy-sources-path)
 mkdir -p ${PROVISION_DIR}
 gsutil -m rsync ${DAISY_SOURCES_PATH}/provision/ ${PROVISION_DIR}/ || true
+fi
 
 echo "DaisyStatus: installing conda-eda environment"
 curl -Ls https://micro.mamba.pm/api/micromamba/linux-64/latest | tar -C /usr/local -xvj bin/micromamba
