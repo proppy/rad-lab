@@ -45,7 +45,6 @@ for tool in yosys netgen
 do
   /opt/conda/bin/conda list -c ${tool} > /OpenLane/install/build/versions/${tool}
 done
-curl -L https://github.com/The-OpenROAD-Project/OpenLane/pull/1229.patch | patch -p1 -d /OpenLane
 
 echo "DaisyStatus: adding profile hook"
 cp ${PROVISION_DIR}/profile.sh /etc/profile.d/silicon-design-profile.sh
