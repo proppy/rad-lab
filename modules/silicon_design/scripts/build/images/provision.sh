@@ -42,11 +42,11 @@ echo "DaisyStatus: installing OpenLane"
 git clone --depth 1 -b ${OPENLANE_VERSION} https://github.com/The-OpenROAD-Project/OpenLane /OpenLane
 
 echo "DaisyStatus: installing OpenROAD Flow"
-!git clone --depth 1 -b ${OPENROAD_FLOW_VERSION} https://github.com/The-OpenROAD-Project/OpenROAD-flow-scripts /OpenROAD-flow-script
+git clone --depth 1 -b ${OPENROAD_FLOW_VERSION} https://github.com/The-OpenROAD-Project/OpenROAD-flow-scripts /OpenROAD-flow-script
 
 echo "DaisyStatus: installing KLayout Flow"
-!curl -O https://www.klayout.org/downloads/Ubuntu-20/klayout_0.27.10-1_amd64.deb
-!dpkg -i klayout_0.27.10-1_amd64.deb || apt-get -f -yq install
+curl -O https://www.klayout.org/downloads/Ubuntu-20/klayout_0.27.10-1_amd64.deb
+dpkg -i klayout_0.27.10-1_amd64.deb || apt-get -f -yq install
 
 echo "DaisyStatus: patching OpenLane"
 cp ${PROVISION_DIR}/install.tcl /OpenLane/configuration/
