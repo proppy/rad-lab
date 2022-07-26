@@ -100,7 +100,7 @@ import pandas as pd
 import pathlib
 import scrapbook as sb
 
-final_summary_report = sorted(pathlib.Path(run_path).glob('*/reports/final_summary_report.csv'))[-1]
+final_summary_report = sorted(pathlib.Path(run_path).glob('*/reports/metrics.csv'))[-1]
 df = pd.read_csv(final_summary_report)
 pd.set_option('display.max_rows', None)
 sb.glue('summary', df, 'pandas')
@@ -123,8 +123,8 @@ def get_power(sta_power_report):
 
 def area_density_ppa():
     for report in sorted(pathlib.Path(run_path).glob('*/reports')):
-        sta_power_report = report / 'routing/23-parasitics_sta.power.rpt'
-        final_summary_report = report / 'final_summary_report.csv'
+        sta_power_report = report / 'signoff/27-rcx_mca_sta.power.rpt'
+        final_summary_report = report / 'metrics.csv'
         if final_summary_report.exists() and sta_power_report.exists():
             df = pd.read_csv(final_summary_report)
             power = get_power(sta_power_report)
