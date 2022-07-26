@@ -19,9 +19,13 @@ trap "echo DaisyFailure: trapped error" ERR
 
 env
 OPENLANE_VERSION=master
+OPENROAD_FLOW_VERSION=master
 PROVISION_DIR=/provision
 
 SYSTEM_NAME=$(dmidecode -s system-product-name || true)
+
+echo "DaisyStatus: install system dependencies"
+apt-get update && apt-get -yq install locales locales-all time
 
 if [ -n "$(echo ${SYSTEM_NAME} | grep 'Google Compute Engine')" ]; then
 echo "DaisyStatus: fetching provisioning script"
@@ -36,6 +40,13 @@ micromamba create --yes -r /opt/conda -n silicon --file ${PROVISION_DIR}/environ
 
 echo "DaisyStatus: installing OpenLane"
 git clone --depth 1 -b ${OPENLANE_VERSION} https://github.com/The-OpenROAD-Project/OpenLane /OpenLane
+
+echo "DaisyStatus: installing OpenROAD Flow"
+!git clone --depth 1 -b ${OPENROAD_FLOW_VERSION} https://github.com/The-OpenROAD-Project/OpenROAD-flow-scripts /OpenROAD-flow-script
+
+echo "DaisyStatus: installing KLayout Flow"
+!curl -O https://www.klayout.org/downloads/Ubuntu-20/klayout_0.27.10-1_amd64.deb
+!dpkg -i klayout_0.27.10-1_amd64.deb || apt-get -f -yq install
 
 echo "DaisyStatus: patching OpenLane"
 cp ${PROVISION_DIR}/install.tcl /OpenLane/configuration/
