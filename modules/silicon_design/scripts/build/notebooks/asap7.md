@@ -35,6 +35,7 @@ This notebook shows how to run a test design thru OpenROAD flow targetting the A
 <!-- #endregion -->
 
 ```python tags=[]
+!python /OpenROAD-flow-scripts/flow/util/genMetrics.py
 import pathlib
 import json
 import pandas as pd
