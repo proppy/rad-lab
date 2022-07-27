@@ -45,7 +45,6 @@ endmodule
 See [OpenLane Variables information](https://github.com/The-OpenROAD-Project/OpenLane/blob/master/configuration/README.md) for the list of available variables.
 
 ```python
-<<<<<<< HEAD
 %%bash -c 'cat > config.tcl; tclsh config.tcl'
 set ::env(DESIGN_NAME) inverter
 
