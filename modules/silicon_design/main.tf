@@ -290,7 +290,7 @@ resource "google_artifact_registry_repository" "containers_repo" {
 
 resource "google_storage_bucket" "staging_bucket" {
   project                     = local.project.project_id
-  name                        = "${local.project.project_id}-${var.name}-notebooks"
+  name                        = "${local.project.project_id}-${var.name}-staging"
   location                    = local.region
   force_destroy               = true
   uniform_bucket_level_access = true
