@@ -257,7 +257,7 @@ resource "google_project_iam_member" "ai_notebook_user_role1" {
 
 resource "google_project_iam_member" "ai_notebook_user_role2" {
   for_each = var.trusted_users
-  project  = local.project.project_id  
+  project  = local.project.project_id
   member   = "user:${each.value}"
   role     = "roles/viewer"
 }
@@ -273,7 +273,7 @@ resource "google_notebooks_instance" "ai_notebook" {
     repository = "${google_artifact_registry_repository.containers_repo.location}-docker.pkg.dev/${local.project.project_id}/${google_artifact_registry_repository.containers_repo.repository_id}/${var.image_name}"
     tag        = local.image_tag
   }
-  
+
   service_account = google_service_account.sa_p_notebook.email
 
   install_gpu_driver = false
@@ -342,7 +342,8 @@ resource "null_resource" "build_and_push_image" {
     environment_sha     = filesha1("${path.module}/scripts/build/images/provision/environment.yml")
     env_sha             = filesha1("${path.module}/scripts/build/images/provision/install.tcl")
     profile_sha         = filesha1("${path.module}/scripts/build/images/provision/profile.sh")
-    notebook_sha        = filesha1("${path.module}/scripts/build/notebooks/inverter.md")
+    notebook_sha        = filesha1("${path.module}/scripts/build/notebooks/inverter/inverter.md")
+>>>>>>> 632a1e8 (modules/silicon_design: fix inverter filepath)
     image_tag = local.image_tag
   }
 
