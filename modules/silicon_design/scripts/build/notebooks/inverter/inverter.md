@@ -5,7 +5,7 @@ jupyter:
       extension: .md
       format_name: markdown
       format_version: '1.3'
-      jupytext_version: 1.13.8
+      jupytext_version: 1.14.1
   kernelspec:
     display_name: Python 3 (ipykernel)
     language: python
@@ -26,8 +26,8 @@ This notebook shows how to run a simple inverter design thru an end-to-end RTL t
 ## Define flow parameters
 
 ```python tags=["parameters"]
-die_width = 45
-target_density = 90
+die_width = 50
+target_density = 70
 run_path = 'runs'
 ```
 
@@ -45,7 +45,7 @@ endmodule
 See [OpenLane Variables information](https://github.com/The-OpenROAD-Project/OpenLane/blob/master/configuration/README.md) for the list of available variables.
 
 ```python
-%%bash -c 'cat > config.tcl; tclsh config.tcl'
+%%writefile config.tcl
 set ::env(DESIGN_NAME) inverter
 
 set ::env(VERILOG_FILES) "inverter.v"
@@ -122,7 +122,7 @@ def get_power(sta_power_report):
 
 def area_density_ppa():
     for report in sorted(pathlib.Path(run_path).glob('*/reports')):
-        sta_power_report = report / 'signoff/27-rcx_mca_sta.power.rpt'
+        sta_power_report = report / 'signoff/28-rcx_mca_sta.power.rpt'
         final_summary_report = report / 'metrics.csv'
         if final_summary_report.exists() and sta_power_report.exists():
             df = pd.read_csv(final_summary_report)
