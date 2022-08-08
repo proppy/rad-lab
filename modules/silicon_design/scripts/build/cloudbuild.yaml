@@ -32,12 +32,12 @@ steps:
   args:
   - '-c'
   - |-
-    sudo apt-get -yq install python3-venv
+    apt-get -yq install python3-venv
     python3 -m venv env/
     env/bin/python -m pip install jupytext
     env/bin/jupytext --to notebook scripts/build/notebooks/**/*.md
     echo "gsutil rsync -r -x '.*\.sh' -x '.*\.json' gs://$_NOTEBOOKS_BUCKET/ /home/jupyter/" > scripts/build/notebooks/copy-notebooks.sh
-    gsutil rsync -r -x '.*\.md' -x '*\.svg' scripts/build/notebooks/ gs://$_NOTEBOOKS_BUCKET/
+    gsutil rsync -r -x '.*\.md' -x '.*\.svg' scripts/build/notebooks/ gs://$_NOTEBOOKS_BUCKET/
   waitFor: ['-']
 - id: 'compute-image-build'
   name: 'gcr.io/cloud-builders/gcloud'
