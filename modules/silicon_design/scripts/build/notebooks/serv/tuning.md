@@ -78,7 +78,7 @@ worker_pool_specs = [{
         'args': ['/usr/local/bin/papermill-launcher', 
                  f'gs://{staging_bucket}/{staging_dir}/{notebook}',
                  f'$AIP_MODEL_DIR/{prefix}_out.ipynb',
-                 '--run_dir=/tmp']
+                 '--run_path=/tmp']
     }
 }]
 custom_job = aiplatform.CustomJob(display_name=f'{prefix}-custom-job',

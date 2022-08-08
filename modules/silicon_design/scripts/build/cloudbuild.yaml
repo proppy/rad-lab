@@ -27,15 +27,23 @@ options:
   logging: CLOUD_LOGGING_ONLY
 steps:
 - id: 'notebooks-build'
-  name: 'python'
+  name: 'gcr.io/cloud-builders/gcloud'
   entrypoint: '/bin/bash'
   args:
   - '-c'
   - |-
-    python3 -m venv env-jupytext/
-    env-jupytext/bin/python -m pip install jupytext
-    env-jupytext/bin/jupytext --to notebook scripts/build/notebooks/*.md
-    echo 'gsutil cp gs://$_NOTEBOOKS_BUCKET/*.ipynb /home/jupyter/' > scripts/build/notebooks/copy-notebooks.sh
+    python3 -m venv env/
+    env/bin/python -m pip install jupytext
+    env/bin/jupytext --to notebook scripts/build/notebooks/**/*.md
+    echo "gsutil rsync -r -x '.*\.sh' -x '.*\.json' gs://$_NOTEBOOKS_BUCKET/ /home/jupyter/" > scripts/build/notebooks/copy-notebooks.sh
+    gsutil rsync -r -x '.*\.md' scripts/build/notebooks/ gs://$_NOTEBOOKS_BUCKET/
+artifacts:
+  objects:
+    location: gs://$_NOTEBOOKS_BUCKET/
+    paths:
+    - 'scripts/build/notebooks/copy-notebooks.sh'
+    - 'scripts/build/notebooks/*.ipynb'
+    
   waitFor: ['-']
 - id: 'compute-image-build'
   name: 'gcr.io/cloud-builders/gcloud'
@@ -68,9 +76,3 @@ steps:
 images:
 - '$_CONTAINER_IMAGE:$_IMAGE_TAG'
 - '$_CONTAINER_IMAGE:latest'
-artifacts:
-  objects:
-    location: gs://$_NOTEBOOKS_BUCKET/
-    paths:
-    - 'scripts/build/notebooks/copy-notebooks.sh'
-    - 'scripts/build/notebooks/*.ipynb'

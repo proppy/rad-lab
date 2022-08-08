@@ -13,45 +13,50 @@ jupyter:
 ---
 
 <!-- #region tags=[] -->
-# Serv Sample
+# Inverter Sample
 
 ```
 Copyright 2022 Google LLC.
 SPDX-License-Identifier: Apache-2.0
 ```
 
-This notebook shows how to run the [SERV](https://github.com/olofk/serv) RISC-V core design thru an end-to-end RTL to GDSII flow targetting the [SKY130](https://github.com/google/skywater-pdk/) process node.
+This notebook shows how to run a simple inverter design thru an end-to-end RTL to GDSII flow targetting the [SKY130](https://github.com/google/skywater-pdk/) process node.
 <!-- #endregion -->
 
 ## Define flow parameters
 
 ```python tags=["parameters"]
-die_width = 300
-target_density = 80
-run_path = 'runs/serv'
+die_width = 45
+target_density = 90
+run_path = 'runs'
 ```
 
-## Get SERV RTL
+## Write verilog
 
-```python
-!git clone https://github.com/olofk/serv
+Invert the `in` input signal and continuously assign it to the `out` output signal.
+
+```bash magic_args="-c 'cat > inverter.v; iverilog inverter.v'"
+module inverter(input wire in, output wire out);
+    assign out = !in;
+endmodule
 ```
 ## Write flow configuration
 
 See [OpenLane Variables information](https://github.com/The-OpenROAD-Project/OpenLane/blob/master/configuration/README.md) for the list of available variables.
 
 ```python
-%%writefile config.tcl
-set ::env(DESIGN_NAME) serv_top
+%%bash -c 'cat > config.tcl; tclsh config.tcl'
+set ::env(DESIGN_NAME) inverter
 
-set script_dir [file dirname [file normalize [info script]]]
-set ::env(VERILOG_FILES) "$script_dir/serv/rtl/*.v"
- 
-set ::env(CLOCK_PORT) "click"
+set ::env(VERILOG_FILES) "inverter.v"
 
 set ::env(FP_SIZING) "absolute"
 set ::env(DIE_AREA) "0 0 $::env(DIE_WIDTH) $::env(DIE_WIDTH)"
 set ::env(PL_TARGET_DENSITY) [expr {$::env(TARGET_DENSITY) / 100.0}]
+
+set ::env(CLOCK_TREE_SYNTH) 0
+set ::env(CLOCK_PORT) ""
+set ::env(DIODE_INSERTION_STRATEGY) 0
 ```
 
 ## Run OpenLane flow
@@ -62,31 +67,26 @@ set ::env(PL_TARGET_DENSITY) [expr {$::env(TARGET_DENSITY) / 100.0}]
 #papermill_description=RunningOpenLaneFlow
 %env DIE_WIDTH={die_width}
 %env TARGET_DENSITY={target_density}
-!flow.tcl -design . -run_path {run_path}
+!flow.tcl -design . -run_path {run_path} -ignore_mismatches
 ```
 
 ## Display layout
 
-Use [GDSII Tool Kit](https://github.com/heitzmann/gdstk) and [CairoSVG](https://cairosvg.org/) to convert the resulting GDSII file to PNG.
+Use [GDSII Tool Kit](https://github.com/heitzmann/gdstk) to convert the resulting GDSII file to SVG.
 
 ```python
 #papermill_description=RenderingGDS
 import pathlib
 import gdstk
-import cairosvg
-
 import IPython.display
 import scrapbook as sb
 
 gds_path = sorted(pathlib.Path(run_path).glob('*/results/final/gds/*.gds'))[-1]
 library = gdstk.read_gds(gds_path)
 top_cells = library.top_level()
-svg_path = pathlib.Path(run_path) / 'serv.svg'
+svg_path = pathlib.Path(run_path) / 'layout.svg'
 top_cells[0].write_svg(svg_path)
-png_path = pathlib.Path(run_path) / 'serv.png'
-
-cairosvg.svg2png(url=str(svg_path), write_to=str(png_path))
-sb.glue('layout', IPython.display.Image(png_path), 'display', display=True)
+sb.glue('layout', IPython.display.SVG(svg_path), 'display', display=True)
 ```
 
 ## Dump flow report
@@ -99,7 +99,7 @@ import pandas as pd
 import pathlib
 import scrapbook as sb
 
-final_summary_report = sorted(pathlib.Path(run_path).glob('*/reports/final_summary_report.csv'))[-1]
+final_summary_report = sorted(pathlib.Path(run_path).glob('*/reports/metrics.csv'))[-1]
 df = pd.read_csv(final_summary_report)
 pd.set_option('display.max_rows', None)
 sb.glue('summary', df, 'pandas')
@@ -122,8 +122,8 @@ def get_power(sta_power_report):
 
 def area_density_ppa():
     for report in sorted(pathlib.Path(run_path).glob('*/reports')):
-        sta_power_report = report / 'routing/23-parasitics_sta.power.rpt'
-        final_summary_report = report / 'final_summary_report.csv'
+        sta_power_report = report / 'signoff/27-rcx_mca_sta.power.rpt'
+        final_summary_report = report / 'metrics.csv'
         if final_summary_report.exists() and sta_power_report.exists():
             df = pd.read_csv(final_summary_report)
             power = get_power(sta_power_report)
