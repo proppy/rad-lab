@@ -286,7 +286,7 @@ resource "google_notebooks_instance" "ai_notebook" {
   network = local.network.self_link
   subnet  = local.subnet.self_link
 
-  post_startup_script = "gs://${google_storage_bucket.notebooks_bucket.name}/copy-notebooks.sh"
+  post_startup_script = "gs://${google_storage_bucket.staging_bucket.name}/copy-notebooks.sh"
 
   labels = {
     module = "silicon-design"
@@ -325,7 +325,7 @@ resource "google_artifact_registry_repository" "containers_repo" {
   ]
 }
 
-resource "google_storage_bucket" "notebooks_bucket" {
+resource "google_storage_bucket" "staging_bucket" {
   project                     = local.project.project_id
   name                        = "${local.project.project_id}-${var.name}-notebooks"
   location                    = local.region
@@ -349,13 +349,13 @@ resource "null_resource" "build_and_push_image" {
 
   provisioner "local-exec" {
     working_dir = path.module
-    command     = "gcloud ${local.gcloud_impersonate_flag} --project=${local.project.project_id} builds submit . --config ${path.module}/scripts/build/cloudbuild.yaml --substitutions \"_ZONE=${var.zone},_COMPUTE_IMAGE=${var.image_name},_CONTAINER_IMAGE=${google_artifact_registry_repository.containers_repo.location}-docker.pkg.dev/${local.project.project_id}/${google_artifact_registry_repository.containers_repo.repository_id}/${var.image_name},_NOTEBOOKS_BUCKET=${google_storage_bucket.notebooks_bucket.name},_COMPUTE_NETWORK=${local.network.id},_COMPUTE_SUBNET=${local.subnet.id}},_IMAGE_TAG=${local.image_tag},_CLOUD_BUILD_SA=${google_service_account.sa_image_builder_identity.email}\""
+    command     = "gcloud ${local.gcloud_impersonate_flag} --project=${local.project.project_id} builds submit . --config ${path.module}/scripts/build/cloudbuild.yaml --substitutions \"_ZONE=${var.zone},_COMPUTE_IMAGE=${var.image_name},_CONTAINER_IMAGE=${google_artifact_registry_repository.containers_repo.location}-docker.pkg.dev/${local.project.project_id}/${google_artifact_registry_repository.containers_repo.repository_id}/${var.image_name},_STAGING_BUCKET=${google_storage_bucket.staging_bucket.name},_COMPUTE_NETWORK=${local.network.id},_COMPUTE_SUBNET=${local.subnet.id}},_IMAGE_TAG=${local.image_tag},_CLOUD_BUILD_SA=${google_service_account.sa_image_builder_identity.email}\""
   }
 
   depends_on = [
     time_sleep.wait_120_seconds,
     google_artifact_registry_repository.containers_repo,
-    google_storage_bucket.notebooks_bucket,
+    google_storage_bucket.staging_bucket,
     google_project_iam_member.sa_image_builder_permissions,
     google_project_iam_member.sa_cloudbuild_permissions,
     google_service_account_iam_member.sa_cloudbuild_image_builder_access,
