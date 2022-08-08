@@ -37,13 +37,6 @@ steps:
     env/bin/jupytext --to notebook scripts/build/notebooks/**/*.md
     echo "gsutil rsync -r -x '.*\.sh' -x '.*\.json' gs://$_NOTEBOOKS_BUCKET/ /home/jupyter/" > scripts/build/notebooks/copy-notebooks.sh
     gsutil rsync -r -x '.*\.md' scripts/build/notebooks/ gs://$_NOTEBOOKS_BUCKET/
-artifacts:
-  objects:
-    location: gs://$_NOTEBOOKS_BUCKET/
-    paths:
-    - 'scripts/build/notebooks/copy-notebooks.sh'
-    - 'scripts/build/notebooks/*.ipynb'
-    
   waitFor: ['-']
 - id: 'compute-image-build'
   name: 'gcr.io/cloud-builders/gcloud'
