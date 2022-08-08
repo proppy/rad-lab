@@ -32,7 +32,7 @@ steps:
   args:
   - '-c'
   - |-
-    apt-get -yq install python3-venv
+    apt-get -yq install python3.8-venv
     python3 -m venv env/
     env/bin/python -m pip install jupytext
     env/bin/jupytext --to notebook scripts/build/notebooks/**/*.md
