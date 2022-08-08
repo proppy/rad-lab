@@ -306,7 +306,7 @@ resource "null_resource" "build_and_push_image" {
     environment_sha        = filesha1("${path.module}/scripts/build/images/provision/environment.yml")    
     env_sha        = filesha1("${path.module}/scripts/build/images/provision/install.tcl")    
     profile_sha        = filesha1("${path.module}/scripts/build/images/provision/profile.sh")    
-    notebook_sha        = filesha1("${path.module}/scripts/build/notebooks/inverter.md")
+    notebook_sha        = filesha1("${path.module}/scripts/build/notebooks/inverter/inverter.md")
     image_tag = local.image_tag
   }
 
