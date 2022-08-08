@@ -10,9 +10,9 @@ This RAD Lab module provides a managed environment for custom silicon design usi
 
 ## Samples notebooks
 
-- [Inverter](scripts/build/notebooks/inverter.md)
+- [Inverter](scripts/build/notebooks/inverter/experiment.md)
 
-![gds render](scripts/build/notebooks/inverter.svg)
+![gds render](scripts/build/notebooks/inverter/layout.svg)
 
 ## GCP Products/Services 
 
