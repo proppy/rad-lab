@@ -13,6 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 channels:
+  - defaults
   - litex-hub
   - conda-forge
 dependencies:
@@ -20,7 +21,6 @@ dependencies:
   - magic
   - openroad
   - netgen
-  - yosys
   - gdstk
   - cairosvg
   - svgutils
@@ -34,10 +34,55 @@ dependencies:
   - pandas
   - pymeep=*=mpi_mpich_*
   - jupyterlab
-  - python
+  - litex-hub::gcc-riscv32-elf-newlib
+  - litex-hub::openfpgaloader
+  - litex-hub::dfu-util
+  - litex-hub::flterm
+  - litex-hub::openocd
+  - litex-hub::verilator
+  - litex-hub::nextpnr-nexus
+  - litex-hub::nextpnr-ecp5
+  - litex-hub::nextpnr-ice40
+  - litex-hub::yosys
+  - litex-hub::iceprog
+  - litex-hub::prjxray-tools
+  - litex-hub::prjxray-db
+  - litex-hub::vtr-optimized
+  - litex-hub::symbiflow-yosys-plugins
+  - lxml
+  - simplejson
+  - intervaltree
+  - json-c
+  - libevent
+  - python=3.7
   - pip
   - pip:
     - klayout
     - scrapbook[gcs]
     - google-cloud-aiplatform
     - cloudml-hypertune
+    - simplejson
+    - termcolor
+    - tqdm
+    - yapf==0.24.0
+    - requests
+    - meson
+    - Pillow
+    - intervaltree
+    - junit-xml
+    - numpy
+    - openpyxl
+    - ordered-set
+    - parse
+    - progressbar2
+    - pyjson5
+    - pytest
+    - pyyaml
+    - scipy>=1.2.1
+    - sympy
+    - textx
+    - python-constraint
+    - fasm
+    - https://github.com/chipsalliance/f4pga/archive/8c411eb74e4bb23d1ec243a1515b9bfb48e2cd83.zip#subdirectory=f4pga
+    - git+https://github.com/f4pga/prjxray.git@ae546d6b7648bf4df9cf63f0b25b2028b5623c43#egg=prjxray
+    - git+https://github.com/chipsalliance/f4pga-xc-fasm.git@25dc605c9c0896204f0c3425b52a332034cf5e5c#egg=xc-fasm
