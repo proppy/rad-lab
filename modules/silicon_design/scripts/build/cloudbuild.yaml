@@ -63,6 +63,7 @@ steps:
   name: 'gcr.io/cloud-builders/docker'
   args: ['tag', '$_CONTAINER_IMAGE:$_IMAGE_TAG', '$_CONTAINER_IMAGE:latest']
   waitFor: ['container-image-build']
-images:
-- '$_CONTAINER_IMAGE:$_IMAGE_TAG'
-- '$_CONTAINER_IMAGE:latest'
+- id: 'container-image-push'
+  name: 'gcr.io/cloud-builders/docker'
+  args: ['push', '--all-tags', '$_CONTAINER_IMAGE']
+  waitFor: ['container-image-tag']  
