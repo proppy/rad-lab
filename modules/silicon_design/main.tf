@@ -61,7 +61,7 @@ locals {
     "roles/storage.admin",
   ]
 
-  notebook_names = length(var.notebook_names) > 0 ? var.notebook_names : [for i in range(var.notebook_count): "${var.name}-nodebook-${i}"]
+  notebook_names = length(var.notebook_names) > 0 ? var.notebook_names : [for i in range(var.notebook_count): "${var.name}-notebook-${i}"]
 
   default_apis = [
     "compute.googleapis.com",
