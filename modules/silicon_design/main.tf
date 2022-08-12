@@ -336,15 +336,16 @@ resource "google_storage_bucket" "staging_bucket" {
 # Locally build container for notebook container and push to container registry #
 resource "null_resource" "build_and_push_image" {
   triggers = {
+    image_tag           = local.image_tag
     cloudbuild_yaml_sha = filesha1("${path.module}/scripts/build/cloudbuild.yaml")
     workflow_sha        = filesha1("${path.module}/scripts/build/images/compute_image.wf.json")
     dockerfile_sha      = filesha1("${path.module}/scripts/build/images/Dockerfile")
+    provision_sha       = filesha1("${path.module}/scripts/build/images/provision.sh")
     environment_sha     = filesha1("${path.module}/scripts/build/images/provision/environment.yml")
     env_sha             = filesha1("${path.module}/scripts/build/images/provision/install.tcl")
     profile_sha         = filesha1("${path.module}/scripts/build/images/provision/profile.sh")
+    papermill_sha       = filesha1("${path.module}/scripts/build/images/provision/papermill-launcher")
     notebook_sha        = filesha1("${path.module}/scripts/build/notebooks/inverter/inverter.md")
->>>>>>> 632a1e8 (modules/silicon_design: fix inverter filepath)
-    image_tag = local.image_tag
   }
 
   provisioner "local-exec" {
