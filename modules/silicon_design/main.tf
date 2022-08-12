@@ -69,7 +69,7 @@ locals {
     "aiplatform.googleapis.com",
   ] : []
 
-  notebook_names = length(var.notebook_names) > 0 ? var.notebook_names : [for i in range(var.notebook_count): "${var.name}-nodebook-${i}"]
+  notebook_names = length(var.notebook_names) > 0 ? var.notebook_names : [for i in range(var.notebook_count): "${var.name}-notebook-${i}"]
   image_tag = var.image_tag != "" ? var.image_tag : formatdate("YYYYMMDDhhmm", timestamp())
 }
 
