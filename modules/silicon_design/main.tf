@@ -106,7 +106,7 @@ resource "google_project_service" "enabled_services" {
   service                    = each.value
   disable_dependent_services = false
   disable_on_destroy         = false
-  
+
   lifecycle {
     prevent_destroy = true
   }
@@ -158,8 +158,8 @@ module "vpc_ai_notebook" {
       direction   = "INGRESS"
 
       allow = [{
-        protocol = "tcp"
-        ports    = ["0-65535"]
+	protocol = "tcp"
+	ports    = ["0-65535"]
       }]
     }
   ]
@@ -184,7 +184,7 @@ resource "google_project_iam_member" "sa_p_notebook_permissions" {
 
 resource "google_project_service_identity" "sa_cloudbuild_identity" {
   provider = google-beta
-  project  = local.project.project_id  
+  project  = local.project.project_id
   service = "cloudbuild.googleapis.com"
 }
 
@@ -229,7 +229,7 @@ resource "google_project_iam_member" "ai_notebook_user_role1" {
 
 resource "google_project_iam_member" "ai_notebook_user_role2" {
   for_each = var.trusted_users
-  project  = local.project.project_id  
+  project  = local.project.project_id
   member   = "user:${each.value}"
   role     = "roles/viewer"
 }
@@ -245,7 +245,7 @@ resource "google_notebooks_instance" "ai_notebook" {
     repository = "${google_artifact_registry_repository.containers_repo.location}-docker.pkg.dev/${local.project.project_id}/${google_artifact_registry_repository.containers_repo.repository_id}/${var.image_name}"
     tag        = local.image_tag
   }
-  
+
   service_account = google_service_account.sa_p_notebook.email
 
   install_gpu_driver = false
@@ -301,13 +301,14 @@ resource "google_storage_bucket" "staging_bucket" {
 resource "null_resource" "build_and_push_image" {
   triggers = {
     cloudbuild_yaml_sha = filesha1("${path.module}/scripts/build/cloudbuild.yaml")
-    workflow_sha      = filesha1("${path.module}/scripts/build/images/compute_image.wf.json")    
+    workflow_sha      = filesha1("${path.module}/scripts/build/images/compute_image.wf.json")
     dockerfile_sha      = filesha1("${path.module}/scripts/build/images/Dockerfile")
-    environment_sha        = filesha1("${path.module}/scripts/build/images/provision/environment.yml")    
-    env_sha        = filesha1("${path.module}/scripts/build/images/provision/install.tcl")    
-    profile_sha        = filesha1("${path.module}/scripts/build/images/provision/profile.sh")    
+    provision_sha      = filesha1("${path.module}/scripts/build/images/provision.sh")
+    environment_sha        = filesha1("${path.module}/scripts/build/images/provision/environment.yml")
+    env_sha        = filesha1("${path.module}/scripts/build/images/provision/install.tcl")
+    profile_sha        = filesha1("${path.module}/scripts/build/images/provision/profile.sh")
+    papermill_sha        = filesha1("${path.module}/scripts/build/images/provision/papermill-launcher")
     notebook_sha        = filesha1("${path.module}/scripts/build/notebooks/inverter/inverter.md")
-    image_tag = local.image_tag
   }
 
   provisioner "local-exec" {
