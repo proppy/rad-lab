@@ -24,6 +24,7 @@ dependencies:
   - netgen=1.5.229_0_g153ce0e
   - yosys
   - gdstk
+  - renode
   - cairosvg
   - svgutils
   - tcllib
@@ -38,8 +39,13 @@ dependencies:
   - jupyterlab
   - python
   - pip
+  - robotframework=4.0.1
+  - psutil
+  - requests
   - pip:
     - klayout
     - scrapbook[gcs]
     - google-cloud-aiplatform
     - cloudml-hypertune
+    - https://github.com/antmicro/pyrenode/archive/mh/flushing.zip
+    - https://github.com/antmicro/renode-colab-tools/archive/master.zip
