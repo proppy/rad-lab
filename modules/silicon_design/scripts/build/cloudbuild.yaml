@@ -36,7 +36,7 @@ steps:
     python3 -m venv env/
     env/bin/python -m pip install jupytext
     env/bin/jupytext --to notebook scripts/build/notebooks/**/*.md
-    echo "gsutil rsync -r -x '.*\.(sh|json)' gs://$_STAGING_BUCKET/ /home/jupyter/" > scripts/build/notebooks/copy-notebooks.sh
+    echo "gsutil rsync -r -x '.*\.(sh|json)' gs://$_STAGING_BUCKET/examples/ /home/jupyter/examples/" > scripts/build/notebooks/copy-notebooks.sh
     gsutil rsync -r -x '.*\.(md|svg)' scripts/build/notebooks/ gs://$_STAGING_BUCKET/
   waitFor: ['-']
 - id: 'compute-image-build'
