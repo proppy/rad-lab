@@ -59,4 +59,6 @@ echo "DaisyStatus: adding papermill launcher"
 cp ${PROVISION_DIR}/papermill-launcher /usr/local/bin/
 chmod +x /usr/local/bin/papermill-launcher
 
+apt-get openssh-server
+
 echo "DaisySuccess: done"
