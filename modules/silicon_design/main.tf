@@ -308,7 +308,7 @@ resource "null_resource" "build_and_push_image" {
     env_sha        = filesha1("${path.module}/scripts/build/images/provision/install.tcl")
     profile_sha        = filesha1("${path.module}/scripts/build/images/provision/profile.sh")
     papermill_sha        = filesha1("${path.module}/scripts/build/images/provision/papermill-launcher")
-    notebook_sha        = filesha1("${path.module}/scripts/build/notebooks/inverter/inverter.md")
+    notebook_sha        = filesha1("${path.module}/scripts/build/notebooks/examples/inverter/inverter.md")
   }
 
   provisioner "local-exec" {
