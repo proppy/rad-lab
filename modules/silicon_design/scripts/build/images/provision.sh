@@ -20,6 +20,7 @@ trap "echo DaisyFailure: trapped error" ERR
 env
 OPENLANE_VERSION=master
 OPENROAD_FLOW_VERSION=master
+CFU_PLAYGROUND_VERSION=dse_framework
 PROVISION_DIR=/tmp/provision
 
 SYSTEM_NAME=$(dmidecode -s system-product-name || true)
@@ -60,3 +61,12 @@ cp ${PROVISION_DIR}/papermill-launcher /usr/local/bin/
 chmod +x /usr/local/bin/papermill-launcher
 
 echo "DaisySuccess: done"
+
+echo "Cloning CFU-Playground repository"
+git clone -b ${CFU_PLAYGROUND_VERSION} https://github.com/google/CFU-Playground.git /CFU-Playground
+
+echo "Running CFU-Playground setup"
+cd /CFU-Playground
+./scripts/setup
+./scripts/setup_vexriscv_build.sh
+
