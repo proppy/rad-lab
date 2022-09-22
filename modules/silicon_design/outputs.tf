@@ -26,7 +26,7 @@ output "project_id" {
 
 output "notebooks_instance_names" {
   description = "Notebook Instance Names"
-  value       = join(", ", google_notebooks_instance.ai_notebook[*].name)
+  value       = join(", ", concat(google_notebooks_instance.ai_notebook_container[*].name, google_notebooks_instance.ai_notebook_vm[*].name))
 }
 
 output "artifact_registry_repository_id" {
