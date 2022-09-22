@@ -104,6 +104,18 @@ variable "create_budget" {
   default     = false
 }
 
+variable "data_disk_size_gb" {
+  description = "The size of the data disk in GB attached to this instance"
+  type        = number
+  default     = 1000
+}
+
+variable "data_disk_type" {
+  description = "Data disk types for notebook instances"
+  type        = string
+  default     = "PD_EXTREME"
+}
+
 variable "create_network" {
   description = "If the module has to be deployed in an existing network, set this variable to false. {{UIMeta group=2 order=1 }}"
   type        = bool
