@@ -262,16 +262,59 @@ resource "google_project_iam_member" "ai_notebook_user_role2" {
   role     = "roles/viewer"
 }
 
-resource "google_notebooks_instance" "ai_notebook" {
+resource "google_notebooks_instance" "ai_notebook_container" {
   count        = var.notebook_count
   project      = local.project.project_id
-  name         = local.notebook_names[count.index]
+  name         = "${local.notebook_names[count.index]}-container"
   location     = var.zone
   machine_type = var.machine_type
 
   container_image {
     repository = "${google_artifact_registry_repository.containers_repo.location}-docker.pkg.dev/${local.project.project_id}/${google_artifact_registry_repository.containers_repo.repository_id}/${var.image_name}"
     tag        = local.image_tag
+  }
+
+  service_account = google_service_account.sa_p_notebook.email
+
+  install_gpu_driver = false
+  boot_disk_type     = var.boot_disk_type
+  boot_disk_size_gb  = var.boot_disk_size_gb
+  data_disk_type     = var.data_disk_type
+  data_disk_size_gb  = var.data_disk_size_gb
+  no_remove_data_disk = true
+
+  no_public_ip    = false
+  no_proxy_access = false
+
+  network = local.network.self_link
+  subnet  = local.subnet.self_link
+
+  post_startup_script = "gs://${google_storage_bucket.staging_bucket.name}/copy-notebooks.sh"
+
+  labels = {
+    module = "silicon-design"
+  }
+
+  metadata = {
+    terraform  = "true"
+    proxy-mode = "service_account"
+  }
+  depends_on = [
+    time_sleep.wait_120_seconds,
+    null_resource.build_and_push_image,
+  ]
+}
+
+resource "google_notebooks_instance" "ai_notebook_vm" {
+  count        = var.notebook_count
+  project      = local.project.project_id
+  name         = "${local.notebook_names[count.index]}-vm"
+  location     = var.zone
+  machine_type = var.machine_type
+
+  vm_image {
+    project      = local.project.project_id
+    image_name   = "${var.image_name}-${local.image_tag}"
   }
 
   service_account = google_service_account.sa_p_notebook.email
