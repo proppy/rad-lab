@@ -59,7 +59,10 @@
 	  "ServiceAccounts": [{
 	    "email": "${service_account}",
 	    "scopes": ["https://www.googleapis.com/auth/devstorage.read_only"]
-	  }]
+	  }],
+	  "Metadata": {
+            "install-unattended-upgrades": "false"
+	  }
         }
       ]
     },
