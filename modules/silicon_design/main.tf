@@ -363,5 +363,6 @@ resource "null_resource" "build_and_push_image" {
     google_project_iam_member.sa_image_builder_permissions,
     google_project_iam_member.sa_cloudbuild_permissions,
     google_service_account_iam_member.sa_cloudbuild_image_builder_access,
+    module.vpc_ai_notebook,
   ]
 }
