@@ -353,7 +353,7 @@ resource "null_resource" "build_and_push_image" {
 
   provisioner "local-exec" {
     working_dir = path.module
-    command     = "gcloud ${local.gcloud_impersonate_flag} --project=${local.project.project_id} builds submit . --config ./scripts/build/cloudbuild.yaml --substitutions \"_ZONE=${var.zone},_COMPUTE_IMAGE=${var.image_name},_CONTAINER_IMAGE=${google_artifact_registry_repository.containers_repo.location}-docker.pkg.dev/${local.project.project_id}/${google_artifact_registry_repository.containers_repo.repository_id}/${var.image_name},_STAGING_BUCKET=${google_storage_bucket.staging_bucket.name},_COMPUTE_NETWORK=${local.network.id},_COMPUTE_SUBNET=${local.subnet.id}},_IMAGE_TAG=${local.image_tag},_CLOUD_BUILD_SA=${google_service_account.sa_image_builder_identity.email}\""
+    command     = "gcloud ${local.gcloud_impersonate_flag} --project=${local.project.project_id} builds submit . --config ./scripts/build/cloudbuild.yaml --substitutions \"_ZONE=${var.zone},_COMPUTE_IMAGE=${var.image_name},_CONTAINER_IMAGE=${google_artifact_registry_repository.containers_repo.location}-docker.pkg.dev/${local.project.project_id}/${google_artifact_registry_repository.containers_repo.repository_id}/${var.image_name},_STAGING_BUCKET=${google_storage_bucket.staging_bucket.name},_COMPUTE_NETWORK=${local.network.id},_COMPUTE_SUBNET=${local.subnet.id},_IMAGE_TAG=${local.image_tag},_CLOUD_BUILD_SA=${google_service_account.sa_image_builder_identity.email}\""
   }
 
   depends_on = [
