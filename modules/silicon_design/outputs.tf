@@ -30,11 +30,6 @@ output "project_id" {
   value       = local.project.project_id
 }
 
-output "notebooks_bucket_name" {
-  description = "Notebooks GCS Bucket Name"
-  value       = google_storage_bucket.notebooks_bucket.name
-}
-
 output "notebook_container_image" {
   description = "Container Image URI"
   value       = "${google_notebooks_instance.ai_notebook[0].container_image[0].repository}:${google_notebooks_instance.ai_notebook[0].container_image[0].tag}"
