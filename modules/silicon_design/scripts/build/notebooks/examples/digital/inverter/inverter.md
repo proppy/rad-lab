@@ -67,7 +67,7 @@ set ::env(DIODE_INSERTION_STRATEGY) 0
 #papermill_description=RunningOpenLaneFlow
 %env DIE_WIDTH={die_width}
 %env TARGET_DENSITY={target_density}
-!flow.tcl -design . -run_path {run_path}
+!flow.tcl -design . -run_path {run_path} -ignore_mismatches
 ```
 
 ## Display layout

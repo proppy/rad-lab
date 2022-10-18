@@ -15,7 +15,7 @@ nnn * You may obtain a copy of the License at
  */
 
 locals {
-  random_id = var.random_id != null ? var.random_id : random_id.default.hex
+  random_id = var.deployment_id != null ? var.deployment_id : random_id.default.0.hex
   project = (var.create_project
     ? try(module.project_radlab_silicon_design.0, null)
     : try(data.google_project.existing_project.0, null)
@@ -61,7 +61,9 @@ locals {
     "roles/storage.admin",
   ]
 
-  project_services = var.enable_services ? [
+  notebook_names = length(var.notebook_names) > 0 ? var.notebook_names : [for i in range(var.notebook_count): "${var.name}-notebook-${i}"]
+
+  default_apis = [
     "compute.googleapis.com",
     "notebooks.googleapis.com",
     "cloudbuild.googleapis.com",
@@ -69,11 +71,15 @@ locals {
     "aiplatform.googleapis.com",
   ] : []
 
-  notebook_names = length(var.notebook_names) > 0 ? var.notebook_names : [for i in range(var.notebook_count): "${var.name}-notebook-${i}"]
+  project_services = var.enable_services ? (var.billing_budget_pubsub_topic ? distinct(concat(local.default_apis,["pubsub.googleapis.com"])) : local.default_apis) : []
+
+  gcloud_impersonate_flag = length(var.resource_creator_identity) != 0 ? "--impersonate-service-account=${var.resource_creator_identity}" : ""
+
   image_tag = var.image_tag != "" ? var.image_tag : formatdate("YYYYMMDDhhmm", timestamp())
 }
 
 resource "random_id" "default" {
+  count       = var.deployment_id == null ? 1 : 0
   byte_length = 2
 }
 
@@ -82,8 +88,8 @@ resource "random_id" "default" {
 ############################
 
 data "google_project" "existing_project" {
-  count       = var.create_project ? 0 : 1
-  project_id  = var.project_name
+  count      = var.create_project ? 0 : 1
+  project_id = var.project_id_prefix
 }
 
 module "project_radlab_silicon_design" {
@@ -91,7 +97,7 @@ module "project_radlab_silicon_design" {
   source  = "terraform-google-modules/project-factory/google"
   version = "~> 13.0"
 
-  name              = format("%s-%s", var.project_name, local.random_id)
+  name              = format("%s-%s", var.project_id_prefix, local.random_id)
   random_project_id = false
   folder_id         = var.folder_id
   billing_account   = var.billing_account_id
@@ -106,7 +112,6 @@ resource "google_project_service" "enabled_services" {
   service                    = each.value
   disable_dependent_services = false
   disable_on_destroy         = false
-
   lifecycle {
     prevent_destroy = true
   }
@@ -165,7 +170,9 @@ module "vpc_ai_notebook" {
   ]
 
   depends_on = [
-    google_project_service.enabled_services
+    module.project_radlab_silicon_design,
+    google_project_service.enabled_services,
+    time_sleep.wait_120_seconds
   ]
 }
 
@@ -182,6 +189,27 @@ resource "google_project_iam_member" "sa_p_notebook_permissions" {
   role     = each.value
 }
 
+resource "google_service_account_iam_member" "sa_ai_notebook_iam" {
+  for_each           = toset(concat(formatlist("user:%s", var.trusted_users), formatlist("group:%s", var.trusted_groups)))
+  member             = each.value
+  role               = "roles/iam.serviceAccountUser"
+  service_account_id = google_service_account.sa_p_notebook.id
+}
+
+resource "google_project_iam_member" "module_role1" {
+  for_each = toset(concat(formatlist("user:%s", var.trusted_users), formatlist("group:%s", var.trusted_groups)))
+  project  = local.project.project_id
+  member   = each.value
+  role     = "roles/notebooks.admin"
+}
+
+resource "google_project_iam_member" "module_role2" {
+  for_each = toset(concat(formatlist("user:%s", var.trusted_users), formatlist("group:%s", var.trusted_groups)))
+  project  = local.project.project_id
+  member   = each.value
+  role     = "roles/viewer"
+}
+
 resource "google_project_service_identity" "sa_cloudbuild_identity" {
   provider = google-beta
   project  = local.project.project_id
@@ -190,8 +218,8 @@ resource "google_project_service_identity" "sa_cloudbuild_identity" {
 
 resource "google_project_iam_member" "sa_cloudbuild_permissions" {
   for_each = toset(local.cloudbuild_sa_project_roles)
-  member   = "serviceAccount:${google_project_service_identity.sa_cloudbuild_identity.email}"
   project  = local.project.project_id
+  member   =  "serviceAccount:${google_project_service_identity.sa_cloudbuild_identity.email}"
   role     = each.value
 }
 
@@ -277,6 +305,15 @@ resource "google_notebooks_instance" "ai_notebook" {
   ]
 }
 
+resource "null_resource" "ai_notebook_provisioning_state" {
+  for_each = toset(google_notebooks_instance.ai_notebook[*].name)
+  provisioner "local-exec" {
+    command = "while [ \"$(gcloud notebooks instances list ${local.gcloud_impersonate_flag} --location ${var.zone} --project ${local.project.project_id} --verbosity=error --filter 'NAME:${each.value} AND STATE:ACTIVE' --format 'value(STATE)' | wc -l | xargs)\" != 1 ]; do echo \"${each.value} not active yet.\"; done"
+  }
+
+  depends_on = [google_notebooks_instance.ai_notebook]
+}
+
 resource "google_artifact_registry_repository" "containers_repo" {
   provider = google-beta
 
@@ -299,27 +336,28 @@ resource "google_storage_bucket" "staging_bucket" {
   uniform_bucket_level_access = true
 }
 
-
 # Locally build container for notebook container and push to container registry #
 resource "null_resource" "build_and_push_image" {
   triggers = {
+    image_tag           = local.image_tag
     cloudbuild_yaml_sha = filesha1("${path.module}/scripts/build/cloudbuild.yaml")
-    workflow_sha      = filesha1("${path.module}/scripts/build/images/compute_image.wf.json")
+    workflow_sha        = filesha1("${path.module}/scripts/build/images/compute_image.wf.json")
     dockerfile_sha      = filesha1("${path.module}/scripts/build/images/Dockerfile")
-    provision_sha      = filesha1("${path.module}/scripts/build/images/provision.sh")
-    environment_sha        = filesha1("${path.module}/scripts/build/images/provision/environment.yml")
-    env_sha        = filesha1("${path.module}/scripts/build/images/provision/install.tcl")
-    profile_sha        = filesha1("${path.module}/scripts/build/images/provision/profile.sh")
-    papermill_sha        = filesha1("${path.module}/scripts/build/images/provision/papermill-launcher")
+    provision_sha       = filesha1("${path.module}/scripts/build/images/provision.sh")
+    environment_sha     = filesha1("${path.module}/scripts/build/images/provision/environment.yml")
+    env_sha             = filesha1("${path.module}/scripts/build/images/provision/install.tcl")
+    profile_sha         = filesha1("${path.module}/scripts/build/images/provision/profile.sh")
+    papermill_sha       = filesha1("${path.module}/scripts/build/images/provision/papermill-launcher")
     notebook_sha        = sha1(join("", [for f in fileset(path.cwd, "scripts/build/notebooks/**/*"): filesha1(f)]))
   }
 
   provisioner "local-exec" {
     working_dir = path.module
-    command     = "gcloud --project=${local.project.project_id} builds submit . --config ./scripts/build/cloudbuild.yaml --substitutions \"_ZONE=${var.zone},_COMPUTE_IMAGE=${var.image_name},_CONTAINER_IMAGE=${google_artifact_registry_repository.containers_repo.location}-docker.pkg.dev/${local.project.project_id}/${google_artifact_registry_repository.containers_repo.repository_id}/${var.image_name},_STAGING_BUCKET=${google_storage_bucket.staging_bucket.name},_COMPUTE_NETWORK=${local.network.id},_COMPUTE_SUBNET=${local.subnet.id},_IMAGE_TAG=${local.image_tag},_CLOUD_BUILD_SA=${google_service_account.sa_image_builder_identity.email}\""
+    command     = "gcloud ${local.gcloud_impersonate_flag} --project=${local.project.project_id} builds submit . --config ${path.module}/scripts/build/cloudbuild.yaml --substitutions \"_ZONE=${var.zone},_COMPUTE_IMAGE=${var.image_name},_CONTAINER_IMAGE=${google_artifact_registry_repository.containers_repo.location}-docker.pkg.dev/${local.project.project_id}/${google_artifact_registry_repository.containers_repo.repository_id}/${var.image_name},_STAGING_BUCKET=${google_storage_bucket.staging_bucket.name},_COMPUTE_NETWORK=${local.network.id},_COMPUTE_SUBNET=${local.subnet.id}},_IMAGE_TAG=${local.image_tag},_CLOUD_BUILD_SA=${google_service_account.sa_image_builder_identity.email}\""
   }
 
   depends_on = [
+    time_sleep.wait_120_seconds,
     google_artifact_registry_repository.containers_repo,
     google_storage_bucket.staging_bucket,
     google_project_iam_member.sa_image_builder_permissions,

@@ -13,11 +13,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-set ::env(PDK_ROOT) "$::env(CONDA_PREFIX)/share/pdk"
-set ::env(TCLLIBPATH) "$::env(CONDA_PREFIX)/opt/conda/lib/tcllib1.20"
-set ::env(OL_INSTALL_DIR) "$::env(OPENLANE_ROOT)/install"
-set ::env(OPENLANE_LOCAL_INSTALL) 1
-set ::env(TEST_MISMATCHES) none
 set ::env(RUN_CVC) 0
 set ::env(RUN_KLAYOUT_XOR) 0
 set ::env(RUN_KLAYOUT_DRC) 0

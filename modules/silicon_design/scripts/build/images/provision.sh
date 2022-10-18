@@ -20,7 +20,7 @@ trap "echo DaisyFailure: trapped error" ERR
 env
 OPENLANE_VERSION=master
 OPENROAD_FLOW_VERSION=master
-PROVISION_DIR=/tmp/provision
+PROVISION_DIR=/provision
 
 SYSTEM_NAME=$(dmidecode -s system-product-name || true)
 

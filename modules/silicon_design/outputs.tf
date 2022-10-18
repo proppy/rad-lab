@@ -14,6 +14,12 @@
  * limitations under the License.
  */
 
+output "billing_budget_budget_id" {
+  sensitive   = true
+  description = "Resource name of the budget. Values are of the form `billingAccounts/{billingAccountId}/budgets/{budgetId}`"
+  value       = var.create_budget ? google_billing_budget.budget[0].name : ""
+}
+
 output "deployment_id" {
   description = "RAD Lab Module Deployment ID"
   value       = local.random_id
@@ -24,7 +30,17 @@ output "project_id" {
   value       = local.project.project_id
 }
 
-output "notebooks_instance_names" {
+output "notebooks_bucket_name" {
+  description = "Notebooks GCS Bucket Name"
+  value       = google_storage_bucket.notebooks_bucket.name
+}
+
+output "notebook_container_image" {
+  description = "Container Image URI"
+  value       = "${google_notebooks_instance.ai_notebook[0].container_image[0].repository}:${google_notebooks_instance.ai_notebook[0].container_image[0].tag}"
+}
+
+output "notebook_instance_names" {
   description = "Notebook Instance Names"
   value       = join(", ", google_notebooks_instance.ai_notebook[*].name)
 }

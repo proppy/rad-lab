@@ -18,8 +18,10 @@ channels:
 dependencies:
   - open_pdks.sky130a
   - magic
-  - openroad
-  - netgen
+  # workaround https://github.com/The-OpenROAD-Project/OpenLane/issues/1387
+  - openroad=2.0_4941_gdc11f5970
+  # workaround https://github.com/The-OpenROAD-Project/OpenLane/issues/1380
+  - netgen=1.5.229_0_g153ce0e
   - yosys
   - gdstk
   - cairosvg
