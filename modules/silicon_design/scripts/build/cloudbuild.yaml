@@ -55,10 +55,11 @@ steps:
 - id: 'container-image-build'
   name: 'gcr.io/cloud-builders/docker'
   args: ['build', '-t', '$_CONTAINER_IMAGE:$_IMAGE_TAG', './scripts/build/images']
+  waitFor: ['-']  
 - id: 'container-image-test'
   name: 'gcr.io/cloud-builders/docker'
   args: ['run', '$_CONTAINER_IMAGE:$_IMAGE_TAG', 'flow.tcl', '-design', 'inverter', '-ignore_mismatches']
-  waitFor: ['container-image-tag']
+  waitFor: ['container-image-build']
 - id: 'container-image-tag'
   name: 'gcr.io/cloud-builders/docker'
   args: ['tag', '$_CONTAINER_IMAGE:$_IMAGE_TAG', '$_CONTAINER_IMAGE:latest']
@@ -66,4 +67,4 @@ steps:
 - id: 'container-image-push'
   name: 'gcr.io/cloud-builders/docker'
   args: ['push', '--all-tags', '$_CONTAINER_IMAGE']
-  waitFor: ['container-image-tag']
+  waitFor: ['container-image-tag', 'container-image-test']
