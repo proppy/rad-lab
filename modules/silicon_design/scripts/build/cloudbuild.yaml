@@ -43,7 +43,7 @@ steps:
   waitFor: ['-']
 - id: 'compute-image-build'
   name: 'gcr.io/cloud-builders/gcloud'
-  entrypoint: '/bin/bash'  
+  entrypoint: '/bin/bash'
   args:
   - '-c'
   - |-
@@ -51,10 +51,14 @@ steps:
     gsutil cp gs://compute-image-tools/release/linux/daisy .
     chmod +x daisy
     gcloud compute images describe $_COMPUTE_IMAGE-$_IMAGE_TAG || ./daisy -project $PROJECT_ID -zone $_ZONE -variables image_name=$_COMPUTE_IMAGE,image_tag=$_IMAGE_TAG,network=$_COMPUTE_NETWORK,subnet=$_COMPUTE_SUBNET,service_account=$_CLOUD_BUILD_SA compute_image.wf.json
-  waitFor: ['-']    
+  waitFor: ['-']
 - id: 'container-image-build'
   name: 'gcr.io/cloud-builders/docker'
   args: ['build', '-t', '$_CONTAINER_IMAGE:$_IMAGE_TAG', './scripts/build/images']
+- id: 'container-image-test'
+  name: 'gcr.io/cloud-builders/docker'
+  args: ['run', '$_CONTAINER_IMAGE:$_IMAGE_TAG', 'flow.tcl', '-design', 'inverter', '-ignore_mismatches']
+  waitFor: ['container-image-tag']
 - id: 'container-image-tag'
   name: 'gcr.io/cloud-builders/docker'
   args: ['tag', '$_CONTAINER_IMAGE:$_IMAGE_TAG', '$_CONTAINER_IMAGE:latest']
@@ -62,4 +66,4 @@ steps:
 - id: 'container-image-push'
   name: 'gcr.io/cloud-builders/docker'
   args: ['push', '--all-tags', '$_CONTAINER_IMAGE']
-  waitFor: ['container-image-tag']  
+  waitFor: ['container-image-tag']
