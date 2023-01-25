@@ -17,10 +17,4 @@
 conda activate base
 conda activate silicon
 
-export OPENLANE_ROOT=/OpenLane
 export PDK_ROOT=/opt/conda/envs/silicon/share/pdk
-export TCLLIBPATH=/opt/conda/envs/silicon/lib/tcllib1.20
-export OL_INSTALL_DIR=/OpenLane/install
-export OPENLANE_LOCAL_INSTALL=1
-export TEST_MISMATCHES=none
-export PATH=$OPENLANE_ROOT:/OpenLane/scripts:$PATH

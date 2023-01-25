@@ -38,19 +38,8 @@ echo "DaisyStatus: installing conda-eda environment"
 curl -Ls https://micro.mamba.pm/api/micromamba/linux-64/latest | tar -C /usr/local -xvj bin/micromamba
 micromamba create --yes -r /opt/conda -n silicon --file ${PROVISION_DIR}/environment.yml
 
-echo "DaisyStatus: installing OpenLane"
-git clone --depth 1 -b ${OPENLANE_VERSION} https://github.com/The-OpenROAD-Project/OpenLane /OpenLane
-
 echo "DaisyStatus: installing OpenROAD Flow"
 git clone --depth 1 -b ${OPENROAD_FLOW_VERSION} https://github.com/The-OpenROAD-Project/OpenROAD-flow-scripts /OpenROAD-flow-scripts
-
-echo "DaisyStatus: installing KLayout Flow"
-curl -O https://www.klayout.org/downloads/Ubuntu-20/klayout_0.27.10-1_amd64.deb
-dpkg -i klayout_0.27.10-1_amd64.deb || apt-get -f -yq install
-
-echo "DaisyStatus: patching OpenLane"
-cp ${PROVISION_DIR}/install.tcl /OpenLane/configuration/
-echo ' install.tcl' >> /OpenLane/configuration/load_order.txt
 
 echo "DaisyStatus: adding profile hook"
 cp ${PROVISION_DIR}/profile.sh /etc/profile.d/silicon-design-profile.sh

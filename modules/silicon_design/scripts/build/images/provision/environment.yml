@@ -16,27 +16,20 @@ channels:
   - litex-hub
   - conda-forge
 dependencies:
+  - openlane
   - open_pdks.sky130a
-  - magic
-  - openroad
-  - netgen
-  - yosys
-  - gdstk
-  - cairosvg
-  - svgutils
-  - tcllib
   - iverilog
   - xls
+  - cairosvg
+  - svgutils
   - pyspice
-  - pyyaml
-  - click
   - gdsfactory
-  - pandas
   - pymeep=*=mpi_mpich_*
   - jupyterlab
   - python
   - pip
   - pip:
+    - gdstk
     - klayout
     - scrapbook[gcs]
     - google-cloud-aiplatform
