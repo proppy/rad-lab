@@ -336,7 +336,6 @@ resource "null_resource" "build_and_push_image" {
     dockerfile_sha      = filesha1("${path.module}/scripts/build/images/Dockerfile")
     provision_sha       = filesha1("${path.module}/scripts/build/images/provision.sh")
     environment_sha     = filesha1("${path.module}/scripts/build/images/provision/environment.yml")
-    env_sha             = filesha1("${path.module}/scripts/build/images/provision/install.tcl")
     profile_sha         = filesha1("${path.module}/scripts/build/images/provision/profile.sh")
     papermill_sha       = filesha1("${path.module}/scripts/build/images/provision/papermill-launcher")
     notebook_sha        = sha1(join("", [for f in fileset(path.cwd, "scripts/build/notebooks/**/*"): filesha1(f)]))
