@@ -18,7 +18,7 @@ RUN apt-get update && apt-get -yq install locales locales-all
 COPY provision.sh /provision.sh
 COPY provision/ /provision/
 RUN bash -x /provision.sh
-RUN sed -i -e 's/conda activate base/conda activate base\nconda activate silicon/' /entrypoint.sh
+RUN sed -i -e 's/conda activate base/conda activate base\nconda activate silicon\n/export RADLAB_SILICON_BUCKET=$RADLAB_SILICON_BUCKET' /entrypoint.sh
 RUN sed -i -e 's@/opt/conda@/opt/conda/envs/silicon@' /run_jupyter.sh
 ENV PDK_ROOT=/opt/conda/envs/silicon/share/pdk
 ENV PDK=sky130A

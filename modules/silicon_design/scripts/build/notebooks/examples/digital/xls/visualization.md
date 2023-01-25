@@ -30,10 +30,10 @@ This notebook shows how to analyse data from [Vertex AI hyperparameter tuning](h
 ```python tags=["parameters"]
 import pathlib
 
-location = 'us-east4'
-#staging_bucket = 'catx-demo-radlab-staging'
-staging_bucket = f'catx-demo-radlab-staging-{location}'
-
+worker_image = os.environ['RADLAB_SILICON_CONTAINER']
+staging_bucket = os.environ['RADLAB_SILICON_BUCKET']
+project = os.environ['RADLAB_SILICON_PROJECT']
+location = os.environ['RADLAB_SILICON_LOCATION']
 notebook = pathlib.Path('asap7.ipynb')
 prefix = notebook.stem
 staging_dir = 'asap7-tuning-20220804141156'

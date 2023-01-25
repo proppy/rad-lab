@@ -27,11 +27,12 @@ This notebook shows how to leverage [Vertex AI hyperparameter tuning](https://cl
 
 ```python tags=["parameters"]
 import pathlib
+import os
 
-worker_image = 'us-east4-docker.pkg.dev/catx-demo-radlab/containers/silicon-design-ubuntu-2004:latest'
-staging_bucket = 'catx-demo-radlab-staging'
-project = 'catx-demo-radlab'
-location = 'us-central1'
+worker_image = os.environ['RADLAB_SILICON_CONTAINER']
+staging_bucket = os.environ['RADLAB_SILICON_BUCKET']
+project = os.environ['RADLAB_SILICON_PROJECT']
+location = os.environ['RADLAB_SILICON_LOCATION']
 machine_type = 'n1-standard-8'
 notebook = 'subservient.ipynb'
 prefix = pathlib.Path(notebook).stem

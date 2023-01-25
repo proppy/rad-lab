@@ -31,9 +31,10 @@ This notebook shows how to leverage [Vertex AI hyperparameter tuning](https://cl
 import pathlib
 import datetime
 
-worker_image = 'us-east4-docker.pkg.dev/catx-demo-radlab/radlab-silicon-tuning-containers/silicon-design-ubuntu-2004:202207270308'
-project = 'catx-demo-radlab'
-location = 'us-east4'
+worker_image = os.environ['RADLAB_SILICON_CONTAINER']
+staging_bucket = os.environ['RADLAB_SILICON_BUCKET']
+project = os.environ['RADLAB_SILICON_PROJECT']
+location = os.environ['RADLAB_SILICON_LOCATION']
 machine_type = 'n1-standard-32'
 notebook = pathlib.Path('asap7.ipynb')
 now = datetime.datetime.now().strftime('%Y%m%d%H%M%S')

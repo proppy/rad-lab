@@ -54,11 +54,21 @@ steps:
   waitFor: ['-']
 - id: 'container-image-build'
   name: 'gcr.io/cloud-builders/docker'
-  args: ['build', '-t', '$_CONTAINER_IMAGE:$_IMAGE_TAG', './scripts/build/images']
+  entrypoint: '/bin/bash'
+  args:
+  - '-c'
+  - |-
+    cat <<EOF >> ./scripts/build/images/Dockerfile
+    ENV RADLAB_SILICON_PROJECT=$_PROJECT_ID
+    ENV RADLAB_SILICON_LOCATIOn=$_ZONE
+    ENV RADLAB_SILICON_CONTAINER=$_CONTAINER_IMAGE:$_IMAGE_TAG
+    ENV RADLAB_SILICON_BUCKET=$_STAGING_BUCKET
+    EOF
+    docker build -t $_CONTAINER_IMAGE:$_IMAGE_TAG ./scripts/build/images
   waitFor: ['-']  
 - id: 'container-image-test'
   name: 'gcr.io/cloud-builders/docker'
-  args: ['run', '$_CONTAINER_IMAGE:$_IMAGE_TAG', 'flow.tcl', '-design', 'inverter', '-ignore_mismatches']
+  args: ['run', '$_CONTAINER_IMAGE:$_IMAGE_TAG', 'flow.tcl', '-design', 'inverter']
   waitFor: ['container-image-build']
 - id: 'container-image-tag'
   name: 'gcr.io/cloud-builders/docker'
