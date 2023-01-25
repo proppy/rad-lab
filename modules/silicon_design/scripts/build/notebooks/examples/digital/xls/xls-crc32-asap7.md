@@ -5,7 +5,7 @@ jupyter:
       extension: .md
       format_name: markdown
       format_version: '1.3'
-      jupytext_version: 1.14.1
+      jupytext_version: 1.14.4
   kernelspec:
     display_name: Python 3 (ipykernel)
     language: python
@@ -64,7 +64,7 @@ fn crc32_one_byte(byte: u8, polynomial: u32, crc: u32) -> u32 {
 }
 
 fn main(message: u8) -> u32 {
-  crc32_one_byte(message, u32:0xEDB88320, u32:-1) ^ u32:-1
+  crc32_one_byte(message, u32:0xEDB88320, u32:0xffffffff) ^ u32:0xffffffff
 }
 ```
 
@@ -117,7 +117,7 @@ set_output_delay [expr $clk_period * $clk_io_pct] -clock $clk_name [all_outputs]
 
 [OpenROAD Flow](https://github.com/The-OpenROAD-Project/OpenROAD-flow-scripts) is a full RTL-to-GDS flow built entirely on open-source tools. The project aims for automated, no-human-in-the-loop digital circuit design with 24-hour turnaround time.
 
-```python jupyter={"outputs_hidden": true} tags=[]
+```python tags=[]
 import pathlib
 import os
 

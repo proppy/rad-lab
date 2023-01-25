@@ -5,7 +5,7 @@ jupyter:
       extension: .md
       format_name: markdown
       format_version: '1.3'
-      jupytext_version: 1.13.8
+      jupytext_version: 1.14.4
   kernelspec:
     display_name: Python 3 (ipykernel)
     language: python
@@ -45,11 +45,10 @@ See [OpenLane Variables information](https://github.com/The-OpenROAD-Project/Ope
 %%writefile config.tcl
 set ::env(DESIGN_NAME) subservient
 
-set script_dir [file dirname [file normalize [info script]]]
 set ::env(VERILOG_FILES) "
-    [glob "$script_dir/serv/rtl/*.v"]
-    [glob "$script_dir/serv/serving/*.v"]
-    [glob "$script_dir/subservient/rtl/*.v"]
+    [glob "serv/rtl/*.v"]
+    [glob "serv/serving/*.v"]
+    [glob "subservient/rtl/*.v"]
 "
 set ::env(CLOCK_PERIOD) "10"
 set ::env(CLOCK_PORT) "i_clk"
@@ -68,7 +67,7 @@ set ::env(PL_TARGET_DENSITY) [expr {$::env(TARGET_DENSITY) / 100.0}]
 #papermill_description=RunningOpenLaneFlow
 %env DIE_WIDTH={die_width}
 %env TARGET_DENSITY={target_density}
-!flow.tcl -design . -run_path {run_path} -verbose 2
+!flow.tcl -design . -run_path {run_path} -ignore_mismatches
 ```
 
 ## Display layout
@@ -105,7 +104,7 @@ import pandas as pd
 import pathlib
 import scrapbook as sb
 
-final_summary_report = sorted(pathlib.Path(run_path).glob('*/reports/final_summary_report.csv'))[-1]
+final_summary_report = sorted(pathlib.Path(run_path).glob('*/reports/metrics.csv'))[-1]
 df = pd.read_csv(final_summary_report)
 pd.set_option('display.max_rows', None)
 sb.glue('summary', df, 'pandas')
@@ -128,8 +127,8 @@ def get_power(sta_power_report):
 
 def area_density_ppa():
     for report in sorted(pathlib.Path(run_path).glob('*/reports')):
-        sta_power_report = report / 'routing/24-parasitics_sta.power.rpt'
-        final_summary_report = report / 'final_summary_report.csv'
+        sta_power_report = report / 'signoff/23-rcx_sta.power.rpt'
+        final_summary_report = report / 'metrics.csv'
         if final_summary_report.exists() and sta_power_report.exists():
             df = pd.read_csv(final_summary_report)
             power = get_power(sta_power_report)

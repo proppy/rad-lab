@@ -5,7 +5,7 @@ jupyter:
       extension: .md
       format_name: markdown
       format_version: '1.3'
-      jupytext_version: 1.13.8
+      jupytext_version: 1.14.4
   kernelspec:
     display_name: Python 3 (ipykernel)
     language: python
@@ -53,10 +53,10 @@ fn crc32_one_byte(byte: u8, polynomial: u32, crc: u32) -> u32 {
 }
 
 fn main(message: u8) -> u32 {
-  crc32_one_byte(message, u32:0xEDB88320, u32:-1) ^ u32:-1
+  crc32_one_byte(message, u32:0xEDB88320, u32:0xFFFFFFFF) ^ u32:0xFFFFFFFF
 }
 
-#![test]
+#[test]
 fn crc32_one_char() {
   assert_eq(u32:0x83DCEFB7, main('1'))
 }
@@ -83,8 +83,7 @@ See [OpenLane Variables information](https://github.com/The-OpenROAD-Project/Ope
 %%writefile config.tcl
 set ::env(DESIGN_NAME) __crc32__main
 
-set script_dir [file dirname [file normalize [info script]]]
-set ::env(VERILOG_FILES) "$script_dir/crc32.v"
+set ::env(VERILOG_FILES) "crc32.v"
  
 set ::env(CLOCK_TREE_SYNTH) 0
 set ::env(CLOCK_PORT) ""
@@ -105,7 +104,7 @@ set ::env(RUN_LVS) 0
 #papermill_description=RunningOpenLaneFlow
 %env DIE_WIDTH={die_width}
 %env TARGET_DENSITY={target_density}
-!flow.tcl -design . -run_path {run_path}
+!flow.tcl -design . -run_path {run_path} -ignore_mismatches
 ```
 
 ## Display layout
@@ -142,7 +141,7 @@ import pandas as pd
 import pathlib
 import scrapbook as sb
 
-final_summary_report = sorted(pathlib.Path(run_path).glob('*/reports/final_summary_report.csv'))[-1]
+final_summary_report = sorted(pathlib.Path(run_path).glob('*/reports/metrics.csv'))[-1]
 df = pd.read_csv(final_summary_report)
 pd.set_option('display.max_rows', None)
 sb.glue('summary', df, 'pandas')
@@ -165,8 +164,8 @@ def get_power(sta_power_report):
 
 def area_density_ppa():
     for report in sorted(pathlib.Path(run_path).glob('*/reports')):
-        sta_power_report = report / 'routing/23-parasitics_sta.power.rpt'
-        final_summary_report = report / 'final_summary_report.csv'
+        sta_power_report = report / 'signoff/23-rcx_sta.power.rpt'
+        final_summary_report = report / 'metrics.csv'
         if final_summary_report.exists() and sta_power_report.exists():
             df = pd.read_csv(final_summary_report)
             power = get_power(sta_power_report)
